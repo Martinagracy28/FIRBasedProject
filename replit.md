@@ -12,16 +12,18 @@ Preferred communication style: Simple, everyday language.
 
 ### January 26, 2025
 - **IPFS File Upload Integration**: Added full IPFS support with drag-and-drop file upload component
-- **Simplified User Registration**: Removed name, email, and phone fields - now only requires wallet address and document uploads
+- **Simplified User Registration**: Removed name, email, and phone fields - now only requires wallet address and document uploads  
 - **Enhanced File Management**: Real file uploading to IPFS with progress indicators and hash generation
 - **Windows Compatibility**: Fixed server binding and environment variable issues for Windows development
+- **Firebase Migration**: Successfully migrated from PostgreSQL to Firebase Realtime Database for better Vercel deployment compatibility
+- **Data Transfer Complete**: Migrated 2 existing users from PostgreSQL to Firebase with all pending verification statuses intact
 
 ## System Architecture
 
 ### Technology Stack
 - **Frontend**: React with TypeScript, using shadcn/ui components and Tailwind CSS
 - **Backend**: Express.js with TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
+- **Database**: Firebase Realtime Database
 - **Blockchain**: Web3 integration (Ethereum Sepolia testnet)
 - **Bundler**: Vite for development and build
 - **State Management**: TanStack Query for server state
@@ -44,8 +46,8 @@ The application follows a full-stack architecture with:
 
 ### Backend Architecture
 - **API Layer**: Express.js with TypeScript providing RESTful endpoints
-- **Database Layer**: Drizzle ORM with PostgreSQL for data persistence
-- **Storage Interface**: Abstract storage layer for data operations
+- **Database Layer**: Firebase Realtime Database for data persistence
+- **Storage Interface**: Abstract storage layer for data operations with Firebase integration
 - **Middleware**: Request logging, JSON parsing, and error handling
 
 ### Database Schema
@@ -92,8 +94,8 @@ The system uses four main entities:
 - **Web3 Provider**: Direct interaction with Ethereum network
 
 ### Database
-- **Neon Database**: Serverless PostgreSQL hosting
-- **Connection Pooling**: Handled by Neon's infrastructure
+- **Firebase Realtime Database**: Real-time NoSQL database
+- **Direct REST API**: Firebase handles all database operations and scaling
 
 ### UI Components
 - **Radix UI**: Accessible component primitives

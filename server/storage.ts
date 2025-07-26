@@ -342,7 +342,7 @@ export class MemStorage implements IStorage {
   }
 }
 
-import { FirebaseStorage } from './firebase-storage';
+import { FirebaseRealtimeStorage } from './firebase-realtime-storage';
 
-// Use Firebase storage instead of PostgreSQL
-export const storage = new FirebaseStorage();
+// Use Firebase Realtime Database storage instead of PostgreSQL
+export const storage = new FirebaseRealtimeStorage();

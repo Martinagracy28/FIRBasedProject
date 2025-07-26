@@ -1,12 +1,13 @@
 // Firebase configuration for client-side
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getDatabase } from "firebase/database";
 import { getAnalytics } from "firebase/analytics";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCay3BXq3iq4iHR6V2whRXBlMzagSk2Akc",
   authDomain: "hackthon-5b62a.firebaseapp.com",
+  databaseURL: "https://hackthon-5b62a-default-rtdb.firebaseio.com",
   projectId: "hackthon-5b62a",
   storageBucket: "hackthon-5b62a.firebasestorage.app",
   messagingSenderId: "137987828166",
@@ -17,8 +18,8 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore
-export const db = getFirestore(app);
+// Initialize Realtime Database
+export const db = getDatabase(app);
 
 // Initialize Analytics (only in browser environment)
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
