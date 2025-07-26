@@ -14,6 +14,7 @@ import { insertUserSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { UserPlus, Upload, Shield } from "lucide-react";
 import TransactionModal from "@/components/transaction-modal";
+import FileUpload from "@/components/file-upload";
 import { z } from "zod";
 
 const registrationSchema = insertUserSchema.extend({
@@ -28,6 +29,7 @@ export default function UserRegistration() {
   const queryClient = useQueryClient();
   const { registerUser, transactionState } = useBlockchain();
   const [showTxModal, setShowTxModal] = useState(false);
+  const [documentHashes, setDocumentHashes] = useState<string[]>([]);
 
   const form = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
@@ -82,21 +84,27 @@ export default function UserRegistration() {
       return;
     }
 
+    if (documentHashes.length === 0) {
+      toast({
+        title: "Documents Required",
+        description: "Please upload at least one identity document",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const formData = {
       ...data,
       walletAddress: account,
-      documentHashes: ["QmX4Yk8p7R2vB3nM9...", "QmY5Zl9q8S3wC4oP0..."], // Mock IPFS hashes
+      documentHashes: documentHashes,
     };
 
     registerMutation.mutate(formData);
   };
 
-  const handleFileUpload = () => {
-    // Mock file upload to IPFS
-    toast({
-      title: "File Upload",
-      description: "File upload functionality would integrate with IPFS here",
-    });
+  const handleFilesUploaded = (hashes: string[]) => {
+    setDocumentHashes(hashes);
+    form.setValue('documentHashes', hashes);
   };
 
   return (
@@ -206,27 +214,20 @@ export default function UserRegistration() {
                   <span>Identity Documents</span>
                 </h4>
                 
-                <div className="space-y-4">
-                  <div className="border-2 border-dashed border-purple-300 rounded-lg p-8 text-center hover:border-purple-600 transition-colors duration-200">
-                    <Upload className="mx-auto text-purple-400 mb-4" size={48} />
-                    <p className="text-gray-600 mb-2">Upload identity documents</p>
-                    <p className="text-sm text-gray-500 mb-4">Files will be stored securely on IPFS</p>
-                    <Button 
-                      type="button" 
-                      onClick={handleFileUpload}
-                      className="bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600"
-                    >
-                      Choose Files
-                    </Button>
-                  </div>
-                  
-                  <div className="text-sm text-gray-600">
-                    <p className="font-medium mb-2">Required Documents:</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>Government-issued Photo ID (Aadhaar, Passport, etc.)</li>
-                      <li>Address Proof (Utility Bill, Bank Statement, etc.)</li>
-                    </ul>
-                  </div>
+                <FileUpload
+                  onFilesUploaded={handleFilesUploaded}
+                  maxFiles={3}
+                  acceptedTypes={['image/*', 'application/pdf', '.doc', '.docx']}
+                  title="Identity Documents"
+                  description="Files will be stored securely on IPFS"
+                />
+                
+                <div className="text-sm text-gray-600 mt-4">
+                  <p className="font-medium mb-2">Required Documents:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Government-issued Photo ID (Aadhaar, Passport, etc.)</li>
+                    <li>Address Proof (Utility Bill, Bank Statement, etc.)</li>
+                  </ul>
                 </div>
               </div>
 

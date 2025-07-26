@@ -16,6 +16,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { INCIDENT_TYPES } from "@/lib/constants";
 import { FilePlus, User, AlertTriangle, Paperclip, Shield, Upload, Trash2 } from "lucide-react";
 import TransactionModal from "@/components/transaction-modal";
+import FileUpload from "@/components/file-upload";
 import { z } from "zod";
 
 const firFormSchema = insertFirSchema.extend({
@@ -30,7 +31,7 @@ export default function FileFir() {
   const queryClient = useQueryClient();
   const { fileFIR, transactionState } = useBlockchain();
   const [showTxModal, setShowTxModal] = useState(false);
-  const [evidenceFiles, setEvidenceFiles] = useState<string[]>([]);
+  const [evidenceHashes, setEvidenceHashes] = useState<string[]>([]);
 
   const { data: user } = useQuery({
     queryKey: ['/api/users/me', account],
@@ -55,7 +56,7 @@ export default function FileFir() {
         ...data,
         complainantId: user?.id,
         incidentDate: new Date(data.incidentDate),
-        evidenceHashes: evidenceFiles,
+        evidenceHashes: evidenceHashes,
       };
       
       // First create FIR in our system
@@ -75,7 +76,7 @@ export default function FileFir() {
         description: "Your FIR has been recorded on the blockchain.",
       });
       form.reset();
-      setEvidenceFiles([]);
+      setEvidenceHashes([]);
     },
     onError: (error: any) => {
       toast({
@@ -102,18 +103,9 @@ export default function FileFir() {
     fileFirMutation.mutate(data);
   };
 
-  const handleFileUpload = () => {
-    // Mock file upload to IPFS
-    const mockHash = `QmX4Yk8p7R2vB3nM9${Math.random().toString(36).substr(2, 9)}`;
-    setEvidenceFiles([...evidenceFiles, mockHash]);
-    toast({
-      title: "File Uploaded",
-      description: "Evidence file uploaded to IPFS successfully",
-    });
-  };
-
-  const removeEvidence = (index: number) => {
-    setEvidenceFiles(evidenceFiles.filter((_, i) => i !== index));
+  const handleEvidenceUploaded = (hashes: string[]) => {
+    setEvidenceHashes(hashes);
+    form.setValue('evidenceHashes', hashes);
   };
 
   if (!user || user.status !== "verified") {
@@ -270,39 +262,14 @@ export default function FileFir() {
                   <Paperclip className="text-purple-600" size={20} />
                   <span>Supporting Evidence</span>
                 </h4>
-                <div className="space-y-4">
-                  {evidenceFiles.map((hash, index) => (
-                    <div key={index} className="flex items-center space-x-4 p-4 bg-white rounded-lg border border-purple-100">
-                      <i className="fas fa-file-image text-purple-600 text-xl"></i>
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">Evidence Document {index + 1}</p>
-                        <p className="text-sm text-gray-600 font-mono break-all">{hash}</p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeEvidence(index)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  ))}
-                  
-                  <div className="border-2 border-dashed border-purple-300 rounded-lg p-8 text-center hover:border-purple-600 transition-colors duration-200">
-                    <Upload className="mx-auto text-purple-400 mb-4" size={48} />
-                    <p className="text-gray-600 mb-2">Upload evidence files</p>
-                    <p className="text-sm text-gray-500 mb-4">Files will be stored securely on IPFS</p>
-                    <Button 
-                      type="button" 
-                      onClick={handleFileUpload}
-                      className="bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600"
-                    >
-                      Choose Files
-                    </Button>
-                  </div>
-                </div>
+                
+                <FileUpload
+                  onFilesUploaded={handleEvidenceUploaded}
+                  maxFiles={5}
+                  acceptedTypes={['image/*', 'video/*', 'application/pdf', '.doc', '.docx']}
+                  title="Evidence Files"
+                  description="Upload photos, videos, documents related to the incident"
+                />
               </div>
 
               {/* Submit Section */}
