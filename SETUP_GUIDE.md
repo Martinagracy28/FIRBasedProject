@@ -111,11 +111,29 @@ export default defineConfig({
 
 ### 6. Running the Application:
 
+**Option 1: Install cross-env (Recommended for Windows)**
+```bash
+npm install --save-dev cross-env
+```
+
+Then update your package.json scripts:
+```json
+"scripts": {
+  "dev": "cross-env NODE_ENV=development tsx server/index.ts"
+}
+```
+
+**Option 2: Direct command (Windows compatible)**
 ```bash
 # Start development server
 npm run dev
 
 # Access at http://localhost:5173
+```
+
+**Option 3: Use PowerShell instead of Command Prompt**
+```powershell
+$env:NODE_ENV="development"; npx tsx server/index.ts
 ```
 
 ### 7. Using the Application:
