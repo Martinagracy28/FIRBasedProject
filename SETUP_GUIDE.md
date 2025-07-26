@@ -136,6 +136,17 @@ npm run dev
 $env:NODE_ENV="development"; npx tsx server/index.ts
 ```
 
+### 🐛 **Windows-Specific Fixes Applied:**
+
+✅ **Server binding issue fixed**: The server now detects Windows and uses `localhost` instead of `0.0.0.0`
+✅ **Removed reusePort option**: This option isn't supported on Windows
+✅ **Environment variable handling**: Server defaults to development mode when NODE_ENV isn't set
+
+**If you still get port errors, try a different port:**
+```bash
+set PORT=3000 && npm run dev
+```
+
 ### 7. Using the Application:
 
 1. **Connect MetaMask** - Click "Connect Wallet" button
