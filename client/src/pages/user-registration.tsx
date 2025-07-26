@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ export default function UserRegistration() {
   const { account } = useWallet();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const { requestRegistration, txStatus, resetTxStatus } = useBlockchain();
   const [showTxModal, setShowTxModal] = useState(false);
   const [documentHashes, setDocumentHashes] = useState<string[]>([]);
@@ -61,6 +63,11 @@ export default function UserRegistration() {
         description: "Your registration has been submitted for verification.",
       });
       form.reset();
+      
+      // Navigate to dashboard after successful registration
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000); // Give time to show the success message
     },
     onError: (error: any) => {
       toast({
