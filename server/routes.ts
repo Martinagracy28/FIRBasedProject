@@ -43,6 +43,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/users/details/:walletAddress", async (req, res) => {
+    try {
+      const { walletAddress } = req.params;
+      const user = await storage.getUserByWallet(walletAddress);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user details" });
+    }
+  });
+
   app.patch("/api/users/:id/status", async (req, res) => {
     try {
       const { id } = req.params;
@@ -197,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousStatus: "pending", // This should be the actual previous status
         newStatus: status,
         comments,
-        blockchainTxHash: null,
+        blockchainTxHash: undefined,
       };
       
       await storage.addFirUpdate(updateData);

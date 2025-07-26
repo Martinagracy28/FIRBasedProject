@@ -7,24 +7,28 @@ import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/hooks/use-wallet";
 import { useBlockchain } from "@/hooks/use-blockchain";
 import { apiRequest } from "@/lib/queryClient";
-import { UserCheck, Eye, Check, X, Clock } from "lucide-react";
+import { UserCheck, Eye, Check, X, Clock, FileText } from "lucide-react";
+import { User as UserType } from "@shared/firebase-schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import TransactionModal from "@/components/transaction-modal";
+import UserVerificationModal from "@/components/user-verification-modal";
 
 export default function VerifyUsers() {
   const { account } = useWallet();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { verifyUser, transactionState } = useBlockchain();
+  const { registerUser, transactionState } = useBlockchain();
   const [showTxModal, setShowTxModal] = useState(false);
   const [currentAction, setCurrentAction] = useState<string>("");
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [selectedUserWallet, setSelectedUserWallet] = useState<string>("");
 
-  const { data: user } = useQuery({
+  const { data: user } = useQuery<UserType>({
     queryKey: ['/api/users/me', account],
     enabled: !!account,
   });
 
-  const { data: pendingUsers, isLoading } = useQuery({
+  const { data: pendingUsers, isLoading } = useQuery<UserType[]>({
     queryKey: ['/api/users/pending'],
     enabled: user?.role === 'officer' || user?.role === 'admin',
   });
@@ -41,7 +45,10 @@ export default function VerifyUsers() {
       // Submit to blockchain
       setShowTxModal(true);
       setCurrentAction(status === 'verified' ? 'approving' : 'rejecting');
-      const txHash = await verifyUser(updatedUser.walletAddress, status === 'verified');
+      const txHash = await registerUser({
+        userAddress: updatedUser.walletAddress,
+        verified: status === 'verified'
+      });
       
       return { updatedUser, txHash };
     },
@@ -69,11 +76,9 @@ export default function VerifyUsers() {
     verifyUserMutation.mutate({ userId, status });
   };
 
-  const viewDocuments = (documentHashes: string[]) => {
-    toast({
-      title: "View Documents",
-      description: "Document viewing would integrate with IPFS gateway here",
-    });
+  const openVerificationModal = (walletAddress: string) => {
+    setSelectedUserWallet(walletAddress);
+    setShowVerificationModal(true);
   };
 
   if (user?.role !== 'officer' && user?.role !== 'admin') {
@@ -125,7 +130,7 @@ export default function VerifyUsers() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {pendingUsers.map((pendingUser: any) => (
+          {pendingUsers.map((pendingUser: UserType) => (
             <Card key={pendingUser.id} className="shadow-lg border-purple-200 hover:shadow-xl transition-shadow duration-200">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -140,7 +145,7 @@ export default function VerifyUsers() {
                       <p className="text-sm text-gray-600 font-mono">{pendingUser.walletAddress}</p>
                       <p className="text-xs text-gray-500 flex items-center space-x-1">
                         <Clock size={12} />
-                        <span>Submitted: {new Date(pendingUser.createdAt).toLocaleString()}</span>
+                        <span>Submitted: {new Date(pendingUser.createdAt.toDate ? pendingUser.createdAt.toDate() : pendingUser.createdAt).toLocaleString()}</span>
                       </p>
                       <p className="text-xs text-gray-500 flex items-center space-x-1">
                         <FileText size={12} />
@@ -152,11 +157,11 @@ export default function VerifyUsers() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => viewDocuments(pendingUser.documentHashes)}
+                      onClick={() => openVerificationModal(pendingUser.walletAddress)}
                       className="text-purple-600 hover:text-purple-700 border-purple-200 hover:bg-purple-50"
                     >
                       <Eye className="mr-1" size={16} />
-                      View Documents
+                      View Details
                     </Button>
                     <Button
                       size="sm"
@@ -182,8 +187,8 @@ export default function VerifyUsers() {
                 <div className="mt-4 bg-gray-50 rounded-lg p-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-600">Contact:</span>
-                      <p className="font-medium text-gray-900">{pendingUser.phone}</p>
+                      <span className="text-gray-600">Status:</span>
+                      <p className="font-medium text-gray-900">{pendingUser.status}</p>
                     </div>
                     <div>
                       <span className="text-gray-600">Documents:</span>
@@ -209,6 +214,13 @@ export default function VerifyUsers() {
         transactionState={transactionState || { isLoading: false, txHash: null, error: null }}
         title="User Verification"
         description={`Please confirm the transaction to ${currentAction} the user on blockchain.`}
+      />
+
+      <UserVerificationModal
+        open={showVerificationModal}
+        onOpenChange={setShowVerificationModal}
+        walletAddress={selectedUserWallet}
+        currentUser={user}
       />
     </div>
   );
