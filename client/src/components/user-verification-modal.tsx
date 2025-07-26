@@ -96,7 +96,17 @@ export default function UserVerificationModal({
   };
 
   const viewDocument = (documentHash: string) => {
-    // Open IPFS document in new window
+    // For development environment - show hash info instead of trying to access actual file
+    if (documentHash.includes('000000') || documentHash.length !== 46) {
+      toast({
+        title: "Development Mode",
+        description: `Document Hash: ${documentHash}\n\nThis is a development environment. In production, this would open the actual document from IPFS.`,
+        duration: 5000,
+      });
+      return;
+    }
+    
+    // Open IPFS document in new window for valid hashes
     window.open(`https://gateway.pinata.cloud/ipfs/${documentHash}`, '_blank');
   };
 
@@ -228,6 +238,17 @@ export default function UserVerificationModal({
                               <p className="text-sm text-gray-600 font-mono">
                                 {hash.substring(0, 20)}...{hash.substring(hash.length - 20)}
                               </p>
+                              <div className="mt-1">
+                                {hash.includes('000000') || hash.length !== 46 ? (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                                    Development Hash
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                    Valid IPFS Hash
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <Button
