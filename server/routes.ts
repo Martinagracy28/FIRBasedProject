@@ -223,6 +223,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Fix officer role endpoint (temporary)
+  app.patch("/api/users/:id/fix-officer-role", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const user = await storage.getUser(id);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check if user is an officer
+      const officers = await storage.getAllOfficers();
+      const isOfficer = officers.some(officer => officer.userId === id);
+      
+      if (isOfficer) {
+        // Update role to officer
+        const updatedUser = await storage.updateUserStatus(id, user.status, user.verifiedBy);
+        res.json(updatedUser);
+      } else {
+        res.status(400).json({ message: "User is not an officer" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fix officer role" });
+    }
+  });
+
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {
     try {

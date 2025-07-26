@@ -111,7 +111,23 @@ export class FirebaseRealtimeStorage implements IStorage {
 
     if (status === "verified") {
       updateData.verifiedAt = serverTimestamp();
-      updateData.role = "user";
+      
+      // Check if this user is an officer
+      const officersRef = ref(db, 'officers');
+      const officersSnapshot = await get(officersRef);
+      let isOfficer = false;
+      
+      if (officersSnapshot.exists()) {
+        const officers = officersSnapshot.val();
+        for (const officerData of Object.values(officers)) {
+          if ((officerData as any).userId === id) {
+            isOfficer = true;
+            break;
+          }
+        }
+      }
+      
+      updateData.role = isOfficer ? "officer" : "user";
     }
 
     await update(userRef, updateData);
