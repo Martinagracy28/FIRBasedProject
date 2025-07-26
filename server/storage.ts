@@ -103,6 +103,7 @@ export class MemStorage implements IStorage {
       id,
       role: "none",
       status: "pending",
+      documentHashes: insertUser.documentHashes || [],
       createdAt: new Date(),
       verifiedAt: null,
       verifiedBy: null,
@@ -228,6 +229,7 @@ export class MemStorage implements IStorage {
       id,
       firNumber,
       status: "pending",
+      evidenceHashes: insertFir.evidenceHashes || [],
       assignedOfficerId: null,
       blockchainTxHash: null,
       closingComments: null,
@@ -300,7 +302,7 @@ export class MemStorage implements IStorage {
       enrichedFirs.push(await this.enrichFirWithDetails(fir));
     }
     
-    return enrichedFirs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return enrichedFirs.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 
   async addFirUpdate(insertUpdate: InsertFirUpdate): Promise<FirUpdate> {
@@ -308,6 +310,8 @@ export class MemStorage implements IStorage {
     const update: FirUpdate = {
       ...insertUpdate,
       id,
+      blockchainTxHash: insertUpdate.blockchainTxHash || null,
+      comments: insertUpdate.comments || null,
       createdAt: new Date(),
     };
     
@@ -318,7 +322,7 @@ export class MemStorage implements IStorage {
   async getFirUpdates(firId: string): Promise<FirUpdate[]> {
     return Array.from(this.firUpdates.values())
       .filter(u => u.firId === firId)
-      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      .sort((a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
   }
 
   async getDashboardStats(): Promise<{

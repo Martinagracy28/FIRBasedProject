@@ -22,7 +22,7 @@ export default function Layout({ children }: LayoutProps) {
   });
 
   const userRole = user?.role || ROLES.NONE;
-  const navigationItems = NAVIGATION[userRole] || [];
+  const navigationItems = NAVIGATION[userRole as keyof typeof NAVIGATION] || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
@@ -62,7 +62,7 @@ export default function Layout({ children }: LayoutProps) {
           <aside className="w-64 bg-white shadow-xl border-r border-purple-100 min-h-screen">
             <nav className="p-6">
               <ul className="space-y-3">
-                {navigationItems.map((item) => {
+                {navigationItems.map((item: any) => {
                   const isActive = location === item.href || (location === "/" && item.href === "/dashboard");
                   
                   return (
