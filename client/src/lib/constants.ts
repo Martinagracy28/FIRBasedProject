@@ -50,6 +50,7 @@ export const NAVIGATION = {
   ],
   [ROLES.NONE]: [
     { href: '/register', label: 'Register', icon: 'user-plus' },
+    { href: '/waiting-approval', label: 'Approval Status', icon: 'clock' },
   ],
 };
 

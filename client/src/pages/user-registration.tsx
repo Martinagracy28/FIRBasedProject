@@ -64,9 +64,9 @@ export default function UserRegistration() {
       });
       form.reset();
       
-      // Navigate to dashboard after successful registration
+      // Navigate to waiting approval page after successful registration
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/waiting-approval');
       }, 2000); // Give time to show the success message
     },
     onError: (error: any) => {

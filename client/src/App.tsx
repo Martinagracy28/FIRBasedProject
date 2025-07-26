@@ -11,6 +11,7 @@ import VerifyUsers from "./pages/verify-users";
 import ManageOfficers from "./pages/manage-officers";
 import FirTracking from "./pages/fir-tracking";
 import UserRegistration from "./pages/user-registration";
+import WaitingApproval from "./pages/waiting-approval";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -24,6 +25,7 @@ function Router() {
         <Route path="/manage-officers" component={ManageOfficers} />
         <Route path="/fir-tracking" component={FirTracking} />
         <Route path="/register" component={UserRegistration} />
+        <Route path="/waiting-approval" component={WaitingApproval} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
