@@ -65,14 +65,23 @@ export default function FileUpload({
     try {
       const hash = await ipfsService.uploadFile(file);
       
-      setUploadedFiles(prev => prev.map((item, i) => 
-        i === index 
-          ? { ...item, hash, status: 'success' as const }
-          : item
-      ));
-
-      // Update parent component with all successful hashes
-      updateParentHashes();
+      setUploadedFiles(prev => {
+        const updated = prev.map((item, i) => 
+          i === index 
+            ? { ...item, hash, status: 'success' as const }
+            : item
+        );
+        
+        // Update parent component with all successful hashes from the updated state
+        setTimeout(() => {
+          const hashes = updated
+            .filter(file => file.status === 'success' && file.hash)
+            .map(file => file.hash!);
+          onFilesUploaded(hashes);
+        }, 100);
+        
+        return updated;
+      });
       
       toast({
         title: "File uploaded successfully",
@@ -97,22 +106,17 @@ export default function FileUpload({
     }
   };
 
-  const updateParentHashes = () => {
-    setTimeout(() => {
-      const hashes = uploadedFiles
-        .filter(file => file.status === 'success' && file.hash)
-        .map(file => file.hash!);
-      onFilesUploaded(hashes);
-    }, 100);
+  const updateParentHashes = (files: UploadedFile[]) => {
+    const hashes = files
+      .filter(file => file.status === 'success' && file.hash)
+      .map(file => file.hash!);
+    onFilesUploaded(hashes);
   };
 
   const removeFile = (index: number) => {
     setUploadedFiles(prev => {
       const newFiles = prev.filter((_, i) => i !== index);
-      const hashes = newFiles
-        .filter(file => file.status === 'success' && file.hash)
-        .map(file => file.hash!);
-      onFilesUploaded(hashes);
+      updateParentHashes(newFiles);
       return newFiles;
     });
   };

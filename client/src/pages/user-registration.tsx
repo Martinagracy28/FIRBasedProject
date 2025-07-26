@@ -84,6 +84,7 @@ export default function UserRegistration() {
       return;
     }
 
+    console.log('Current document hashes:', documentHashes);
     if (documentHashes.length === 0) {
       toast({
         title: "Documents Required",
@@ -103,6 +104,7 @@ export default function UserRegistration() {
   };
 
   const handleFilesUploaded = (hashes: string[]) => {
+    console.log('Files uploaded, hashes received:', hashes);
     setDocumentHashes(hashes);
     form.setValue('documentHashes', hashes);
   };
