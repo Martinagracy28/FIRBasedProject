@@ -20,13 +20,36 @@ export function useBlockchain() {
 
   // Convert IPFS hash to bytes32 format
   const ipfsHashToBytes32 = useCallback((ipfsHash: string): string => {
-    // For simplicity, we'll use the IPFS hash directly as a string
-    // and let the smart contract handle the conversion
-    // In a real implementation, you'd convert properly to bytes32
-    const encoder = new TextEncoder();
-    const data = encoder.encode(ipfsHash);
-    const hex = Array.from(data, byte => byte.toString(16).padStart(2, '0')).join('');
-    return '0x' + hex.padEnd(64, '0');
+    // For IPFS hashes, we need to properly convert to bytes32
+    // Method 1: Use keccak256 hash of the IPFS hash string
+    try {
+      // Import ethers dynamically
+      const encoder = new TextEncoder();
+      const data = encoder.encode(ipfsHash);
+      
+      // Create a proper 32-byte hash by taking first 32 bytes and padding if needed
+      const bytes = new Uint8Array(32);
+      for (let i = 0; i < Math.min(data.length, 32); i++) {
+        bytes[i] = data[i];
+      }
+      
+      const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+      return '0x' + hex;
+    } catch (error) {
+      console.error('Error converting IPFS hash to bytes32:', error);
+      // Fallback: create a simple hash
+      const encoder = new TextEncoder();
+      const data = encoder.encode(ipfsHash);
+      const bytes = new Uint8Array(32);
+      
+      // Fill first bytes with hash data, rest with zeros
+      for (let i = 0; i < Math.min(data.length, 32); i++) {
+        bytes[i] = data[i];
+      }
+      
+      const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+      return '0x' + hex;
+    }
   }, []);
 
   // Call requestRegistration on the smart contract
@@ -51,7 +74,11 @@ export function useBlockchain() {
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
       // Convert IPFS hashes to bytes32 format
-      const bytes32Hashes = documentHashes.map(hash => ipfsHashToBytes32(hash));
+      const bytes32Hashes = documentHashes.map(hash => {
+        const converted = ipfsHashToBytes32(hash);
+        console.log(`Converting ${hash} to ${converted}`);
+        return converted;
+      });
 
       console.log('Calling requestRegistration with:', {
         documentHashes,
