@@ -35,9 +35,6 @@ export default function UserRegistration() {
     resolver: zodResolver(registrationSchema),
     defaultValues: {
       walletAddress: account || "",
-      name: "",
-      email: "",
-      phone: "",
       documentHashes: [],
     },
   });
@@ -131,62 +128,7 @@ export default function UserRegistration() {
                   <span>Personal Information</span>
                 </h4>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Enter your full name" 
-                            {...field} 
-                            className="border-purple-200 focus:ring-purple-600"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contact Number</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="+91 XXXXX XXXXX" 
-                            {...field} 
-                            className="border-purple-200 focus:ring-purple-600"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Address</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="email"
-                            placeholder="your.email@example.com" 
-                            {...field} 
-                            className="border-purple-200 focus:ring-purple-600"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
+                <div className="space-y-6">
                   <FormField
                     control={form.control}
                     name="walletAddress"
@@ -201,6 +143,9 @@ export default function UserRegistration() {
                           />
                         </FormControl>
                         <FormMessage />
+                        <p className="text-sm text-gray-600">
+                          Your connected wallet address will be used as your unique identifier
+                        </p>
                       </FormItem>
                     )}
                   />

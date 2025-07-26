@@ -134,11 +134,17 @@ export default function VerifyUsers() {
                       <UserCheck className="text-white" size={20} />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">{pendingUser.name}</h4>
-                      <p className="text-sm text-gray-600">{pendingUser.email}</p>
+                      <h4 className="font-semibold text-gray-900">
+                        {pendingUser.walletAddress.substring(0, 8)}...{pendingUser.walletAddress.substring(pendingUser.walletAddress.length - 6)}
+                      </h4>
+                      <p className="text-sm text-gray-600 font-mono">{pendingUser.walletAddress}</p>
                       <p className="text-xs text-gray-500 flex items-center space-x-1">
                         <Clock size={12} />
                         <span>Submitted: {new Date(pendingUser.createdAt).toLocaleString()}</span>
+                      </p>
+                      <p className="text-xs text-gray-500 flex items-center space-x-1">
+                        <FileText size={12} />
+                        <span>{pendingUser.documentHashes?.length || 0} document(s) uploaded</span>
                       </p>
                     </div>
                   </div>

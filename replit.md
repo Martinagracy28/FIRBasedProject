@@ -8,6 +8,14 @@ SecureFIR is a modern web application that digitizes and secures the First Infor
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### January 26, 2025
+- **IPFS File Upload Integration**: Added full IPFS support with drag-and-drop file upload component
+- **Simplified User Registration**: Removed name, email, and phone fields - now only requires wallet address and document uploads
+- **Enhanced File Management**: Real file uploading to IPFS with progress indicators and hash generation
+- **Windows Compatibility**: Fixed server binding and environment variable issues for Windows development
+
 ## System Architecture
 
 ### Technology Stack

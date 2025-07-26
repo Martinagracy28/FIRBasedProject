@@ -6,9 +6,6 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   walletAddress: text("wallet_address").notNull().unique(),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  phone: text("phone").notNull(),
   role: text("role").notNull().default("none"), // none, user, officer, admin
   status: text("status").notNull().default("pending"), // pending, verified, rejected
   documentHashes: jsonb("document_hashes").$type<string[]>().default([]),
@@ -59,9 +56,6 @@ export const firUpdates = pgTable("fir_updates", {
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   walletAddress: true,
-  name: true,
-  email: true,
-  phone: true,
   documentHashes: true,
 });
 

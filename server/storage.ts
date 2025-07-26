@@ -71,9 +71,6 @@ export class MemStorage implements IStorage {
     const admin: User = {
       id: adminId,
       walletAddress: "0x0000000000000000000000000000000000000000",
-      name: "System Admin",
-      email: "admin@securefir.com",
-      phone: "+91-9999999999",
       role: "admin",
       status: "verified",
       documentHashes: [],
