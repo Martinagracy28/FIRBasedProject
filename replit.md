@@ -1,0 +1,121 @@
+# SecureFIR - Blockchain-Based Police FIR Management System
+
+## Overview
+
+SecureFIR is a modern web application that digitizes and secures the First Information Report (FIR) process for police departments using blockchain technology. The system provides role-based access for citizens, police officers, and administrators to file, manage, and track FIRs with complete transparency and immutability.
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## System Architecture
+
+### Technology Stack
+- **Frontend**: React with TypeScript, using shadcn/ui components and Tailwind CSS
+- **Backend**: Express.js with TypeScript
+- **Database**: PostgreSQL with Drizzle ORM
+- **Blockchain**: Web3 integration (Ethereum Sepolia testnet)
+- **Bundler**: Vite for development and build
+- **State Management**: TanStack Query for server state
+
+### Architecture Pattern
+The application follows a full-stack architecture with:
+- Clear separation between client and server code
+- Shared schema definitions for type safety
+- RESTful API design
+- Blockchain integration for data integrity
+
+## Key Components
+
+### Frontend Architecture
+- **Component Library**: shadcn/ui provides a comprehensive set of UI components
+- **Routing**: Wouter for client-side routing
+- **Forms**: React Hook Form with Zod validation
+- **Styling**: Tailwind CSS with custom purple/violet theme
+- **Web3**: Custom wallet connection and blockchain interaction hooks
+
+### Backend Architecture
+- **API Layer**: Express.js with TypeScript providing RESTful endpoints
+- **Database Layer**: Drizzle ORM with PostgreSQL for data persistence
+- **Storage Interface**: Abstract storage layer for data operations
+- **Middleware**: Request logging, JSON parsing, and error handling
+
+### Database Schema
+The system uses four main entities:
+- **Users**: Stores user information with role-based permissions (none, user, officer, admin)
+- **Officers**: Extended user data for police officers with case statistics
+- **FIRs**: Core FIR data with status tracking and evidence hashes
+- **FIR Updates**: Activity log for FIR status changes and comments
+
+### Role-Based Access Control
+- **Admin**: Manage officers, view all FIRs, system oversight
+- **Officer**: Verify users, manage assigned FIRs, update case status
+- **User**: File FIRs, track personal reports
+- **None/Guest**: Registration and basic information access
+
+## Data Flow
+
+### User Registration Flow
+1. User connects wallet (MetaMask)
+2. User submits registration form with identity documents
+3. System stores user data and document hashes
+4. Officer verifies user identity
+5. Blockchain transaction records verification status
+
+### FIR Filing Flow
+1. Verified user submits FIR with incident details
+2. System generates unique FIR number
+3. Evidence files are hashed and stored
+4. Blockchain transaction creates immutable record
+5. FIR enters pending status for officer assignment
+
+### Case Management Flow
+1. Admin assigns FIR to available officer
+2. Officer investigates and updates case status
+3. Status changes are logged with timestamps
+4. Blockchain transactions ensure audit trail
+5. Case closure requires officer comments
+
+## External Dependencies
+
+### Blockchain Integration
+- **MetaMask**: Browser wallet for user authentication
+- **Ethereum Sepolia**: Testnet for blockchain transactions
+- **Web3 Provider**: Direct interaction with Ethereum network
+
+### Database
+- **Neon Database**: Serverless PostgreSQL hosting
+- **Connection Pooling**: Handled by Neon's infrastructure
+
+### UI Components
+- **Radix UI**: Accessible component primitives
+- **Lucide React**: Icon library
+- **Tailwind CSS**: Utility-first styling
+
+### Development Tools
+- **Drizzle Kit**: Database migrations and schema management
+- **ESBuild**: Fast JavaScript bundling for production
+- **TypeScript**: Type safety across the entire stack
+
+## Deployment Strategy
+
+### Development Environment
+- Vite dev server for hot module replacement
+- Express server with middleware for API requests
+- Environment variables for database and blockchain configuration
+
+### Production Build
+- Vite builds optimized client bundle
+- ESBuild bundles server code for Node.js deployment
+- Static assets served from dist/public directory
+
+### Database Management
+- Drizzle Kit handles schema migrations
+- Environment-based connection strings
+- Automatic UUID generation for primary keys
+
+### Security Considerations
+- Wallet-based authentication eliminates password management
+- Document hashes prevent tampering while maintaining privacy
+- Blockchain immutability ensures audit trail integrity
+- Role-based access controls restrict sensitive operations

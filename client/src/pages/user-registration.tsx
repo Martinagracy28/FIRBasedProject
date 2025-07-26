@@ -1,0 +1,264 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { useWallet } from "@/hooks/use-wallet";
+import { useBlockchain } from "@/hooks/use-blockchain";
+import { insertUserSchema } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { UserPlus, Upload, Shield } from "lucide-react";
+import TransactionModal from "@/components/transaction-modal";
+import { z } from "zod";
+
+const registrationSchema = insertUserSchema.extend({
+  documentFiles: z.any().optional(),
+});
+
+type RegistrationFormData = z.infer<typeof registrationSchema>;
+
+export default function UserRegistration() {
+  const { account } = useWallet();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { registerUser, transactionState } = useBlockchain();
+  const [showTxModal, setShowTxModal] = useState(false);
+
+  const form = useForm<RegistrationFormData>({
+    resolver: zodResolver(registrationSchema),
+    defaultValues: {
+      walletAddress: account || "",
+      name: "",
+      email: "",
+      phone: "",
+      documentHashes: [],
+    },
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: async (data: RegistrationFormData) => {
+      // First register user in our system
+      const response = await apiRequest("POST", "/api/users/register", data);
+      const user = await response.json();
+      
+      // Then submit to blockchain
+      setShowTxModal(true);
+      const txHash = await registerUser(data);
+      
+      return { user, txHash };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users/me'] });
+      toast({
+        title: "Registration Submitted",
+        description: "Your registration has been submitted for verification.",
+      });
+      form.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Registration Failed",
+        description: error.message || "Failed to submit registration",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setTimeout(() => setShowTxModal(false), 3000);
+    },
+  });
+
+  const onSubmit = (data: RegistrationFormData) => {
+    if (!account) {
+      toast({
+        title: "Wallet Required",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const formData = {
+      ...data,
+      walletAddress: account,
+      documentHashes: ["QmX4Yk8p7R2vB3nM9...", "QmY5Zl9q8S3wC4oP0..."], // Mock IPFS hashes
+    };
+
+    registerMutation.mutate(formData);
+  };
+
+  const handleFileUpload = () => {
+    // Mock file upload to IPFS
+    toast({
+      title: "File Upload",
+      description: "File upload functionality would integrate with IPFS here",
+    });
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <Card className="shadow-xl border-purple-100">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-3">
+            <UserPlus className="text-purple-600" size={24} />
+            <span>User Registration</span>
+          </CardTitle>
+          <div className="flex items-center space-x-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm w-fit">
+            <Shield size={16} />
+            <span>Blockchain Secured</span>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Personal Information */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-100">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                  <UserPlus className="text-purple-600" size={20} />
+                  <span>Personal Information</span>
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter your full name" 
+                            {...field} 
+                            className="border-purple-200 focus:ring-purple-600"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contact Number</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="+91 XXXXX XXXXX" 
+                            {...field} 
+                            className="border-purple-200 focus:ring-purple-600"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="email"
+                            placeholder="your.email@example.com" 
+                            {...field} 
+                            className="border-purple-200 focus:ring-purple-600"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="walletAddress"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Wallet Address</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            disabled
+                            className="border-purple-200 font-mono text-sm bg-gray-50"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Document Upload */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-100">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                  <Upload className="text-purple-600" size={20} />
+                  <span>Identity Documents</span>
+                </h4>
+                
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-purple-300 rounded-lg p-8 text-center hover:border-purple-600 transition-colors duration-200">
+                    <Upload className="mx-auto text-purple-400 mb-4" size={48} />
+                    <p className="text-gray-600 mb-2">Upload identity documents</p>
+                    <p className="text-sm text-gray-500 mb-4">Files will be stored securely on IPFS</p>
+                    <Button 
+                      type="button" 
+                      onClick={handleFileUpload}
+                      className="bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600"
+                    >
+                      Choose Files
+                    </Button>
+                  </div>
+                  
+                  <div className="text-sm text-gray-600">
+                    <p className="font-medium mb-2">Required Documents:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Government-issued Photo ID (Aadhaar, Passport, etc.)</li>
+                      <li>Address Proof (Utility Bill, Bank Statement, etc.)</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <div className="flex items-center justify-between pt-6 border-t border-purple-100">
+                <p className="text-sm text-gray-600 flex items-center space-x-2">
+                  <Shield className="text-purple-600" size={16} />
+                  <span>This registration will be recorded on the blockchain</span>
+                </p>
+                <Button 
+                  type="submit"
+                  disabled={registerMutation.isPending}
+                  className="bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  <UserPlus className="mr-2" size={16} />
+                  {registerMutation.isPending ? "Submitting..." : "Submit Registration"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
+      <TransactionModal
+        isOpen={showTxModal}
+        onClose={() => setShowTxModal(false)}
+        isLoading={transactionState.isLoading}
+        txHash={transactionState.txHash}
+        error={transactionState.error}
+        title="User Registration"
+        description="Please confirm the transaction in MetaMask and wait for blockchain confirmation."
+      />
+    </div>
+  );
+}
