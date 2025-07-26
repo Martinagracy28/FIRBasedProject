@@ -3,12 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { AlertTriangle, CheckCircle, ExternalLink, Loader2 } from "lucide-react";
 
-interface TransactionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface TransactionState {
   isLoading: boolean;
   txHash: string | null;
   error: string | null;
+}
+
+interface TransactionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  transactionState: TransactionState;
   title: string;
   description: string;
 }
@@ -16,12 +20,11 @@ interface TransactionModalProps {
 export default function TransactionModal({
   isOpen,
   onClose,
-  isLoading,
-  txHash,
-  error,
+  transactionState,
   title,
   description,
 }: TransactionModalProps) {
+  const { isLoading, txHash, error } = transactionState;
   const getExplorerUrl = (hash: string) => {
     // Ethereum Sepolia testnet explorer
     return `https://sepolia.etherscan.io/tx/${hash}`;

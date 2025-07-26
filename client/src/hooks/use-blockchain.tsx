@@ -145,9 +145,36 @@ export function useBlockchain() {
     });
   }, []);
 
+  // Placeholder functions for missing blockchain operations
+  const registerUser = useCallback(async (userData: any): Promise<string> => {
+    return requestRegistration(userData.documentHashes || []);
+  }, [requestRegistration]);
+
+  const fileFIR = useCallback(async (firData: any): Promise<string> => {
+    // Convert FIR data to IPFS hash and register on blockchain
+    const firHash = ipfsHashToBytes32(JSON.stringify(firData));
+    return requestRegistration([firHash]);
+  }, [requestRegistration, ipfsHashToBytes32]);
+
+  const updateFIRStatus = useCallback(async (firId: string, status: string): Promise<string> => {
+    // Update FIR status on blockchain
+    const statusHash = ipfsHashToBytes32(`${firId}_${status}_${Date.now()}`);
+    return requestRegistration([statusHash]);
+  }, [requestRegistration, ipfsHashToBytes32]);
+
+  const assignOfficer = useCallback(async (firId: string, officerId: string): Promise<string> => {
+    // Assign officer on blockchain
+    const assignHash = ipfsHashToBytes32(`${firId}_officer_${officerId}_${Date.now()}`);
+    return requestRegistration([assignHash]);
+  }, [requestRegistration, ipfsHashToBytes32]);
+
   return {
     requestRegistration,
-    txStatus,
+    registerUser,
+    fileFIR,
+    updateFIRStatus,
+    assignOfficer,
+    transactionState: txStatus,
     resetTxStatus,
     ipfsHashToBytes32,
   };

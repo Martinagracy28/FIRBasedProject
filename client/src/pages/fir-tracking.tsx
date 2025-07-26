@@ -50,7 +50,7 @@ export default function FirTracking() {
   const { data: officer } = useQuery({
     queryKey: ['/api/officers'],
     enabled: user?.role === 'officer',
-    select: (officers: any[]) => officers?.find(o => o.userId === user?.id),
+    select: (officers: any[]) => officers?.find?.(o => o.userId === user?.id),
   });
 
   const queryParams = new URLSearchParams();
@@ -484,9 +484,7 @@ export default function FirTracking() {
       <TransactionModal
         isOpen={showTxModal}
         onClose={() => setShowTxModal(false)}
-        isLoading={transactionState.isLoading}
-        txHash={transactionState.txHash}
-        error={transactionState.error}
+        transactionState={transactionState || { isLoading: false, txHash: null, error: null }}
         title="Blockchain Transaction"
         description="Please confirm the transaction in MetaMask and wait for blockchain confirmation."
       />
