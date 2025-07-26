@@ -9,7 +9,7 @@ import {
   type InsertFirUpdate,
   type FirWithDetails,
   type UserWithRole
-} from "@shared/schema";
+} from "@shared/firebase-schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -342,7 +342,7 @@ export class MemStorage implements IStorage {
   }
 }
 
-import { DbStorage } from './db-storage';
+import { FirebaseStorage } from './firebase-storage';
 
-// Use database storage instead of memory storage
-export const storage = new DbStorage();
+// Use Firebase storage instead of PostgreSQL
+export const storage = new FirebaseStorage();

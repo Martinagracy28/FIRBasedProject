@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertOfficerSchema, insertFirSchema, insertFirUpdateSchema } from "@shared/schema";
+import { insertUserSchema, insertOfficerSchema, insertFirSchema, insertFirUpdateSchema } from "@shared/firebase-schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
