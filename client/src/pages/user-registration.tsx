@@ -13,7 +13,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { useBlockchain } from "@/hooks/use-blockchain";
 import { insertUserSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { UserPlus, Upload, Shield } from "lucide-react";
+import { UserPlus, Upload, Shield, ArrowLeft } from "lucide-react";
 import TransactionModal from "@/components/transaction-modal";
 import FileUpload from "@/components/file-upload";
 import { z } from "zod";
@@ -118,6 +118,18 @@ export default function UserRegistration() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Back Button */}
+      <div className="mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/dashboard')}
+          className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+        >
+          <ArrowLeft className="mr-2" size={16} />
+          Back to Dashboard
+        </Button>
+      </div>
+
       <Card className="shadow-xl border-purple-100">
         <CardHeader>
           <CardTitle className="flex items-center space-x-3">
