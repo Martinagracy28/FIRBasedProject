@@ -27,7 +27,7 @@ export default function UserRegistration() {
   const { account } = useWallet();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { registerUser, transactionState } = useBlockchain();
+  const { requestRegistration, txStatus, resetTxStatus } = useBlockchain();
   const [showTxModal, setShowTxModal] = useState(false);
   const [documentHashes, setDocumentHashes] = useState<string[]>([]);
 
@@ -45,11 +45,14 @@ export default function UserRegistration() {
       const response = await apiRequest("POST", "/api/users/register", data);
       const user = await response.json();
       
-      // Then submit to blockchain
-      setShowTxModal(true);
-      const txHash = await registerUser(data);
+      // Then submit to blockchain with document hashes
+      if (documentHashes.length > 0) {
+        setShowTxModal(true);
+        const txHash = await requestRegistration(documentHashes);
+        return { user, txHash };
+      }
       
-      return { user, txHash };
+      return { user, txHash: null };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users/me'] });
@@ -199,9 +202,9 @@ export default function UserRegistration() {
       <TransactionModal
         isOpen={showTxModal}
         onClose={() => setShowTxModal(false)}
-        isLoading={transactionState.isLoading}
-        txHash={transactionState.txHash}
-        error={transactionState.error}
+        isLoading={txStatus.isLoading}
+        txHash={txStatus.txHash}
+        error={txStatus.error}
         title="User Registration"
         description="Please confirm the transaction in MetaMask and wait for blockchain confirmation."
       />

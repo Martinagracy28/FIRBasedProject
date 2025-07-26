@@ -1,135 +1,127 @@
-import { useState } from 'react';
-import { web3Service } from '@/lib/web3';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useCallback } from 'react';
+import { CONTRACT_ADDRESS, CONTRACT_ABI } from '@/lib/contract-abi';
+import { useWallet } from './use-wallet';
 
-interface TransactionState {
+export interface BlockchainTransactionStatus {
   isLoading: boolean;
   txHash: string | null;
   error: string | null;
+  success: boolean;
 }
 
 export function useBlockchain() {
-  const [transactionState, setTransactionState] = useState<TransactionState>({
+  const { account, isConnected } = useWallet();
+  const [txStatus, setTxStatus] = useState<BlockchainTransactionStatus>({
     isLoading: false,
     txHash: null,
     error: null,
+    success: false,
   });
-  const { toast } = useToast();
 
-  const executeTransaction = async (
-    operation: () => Promise<string>,
-    successMessage: string = "Transaction successful"
-  ) => {
-    setTransactionState({ isLoading: true, txHash: null, error: null });
+  // Convert IPFS hash to bytes32 format
+  const ipfsHashToBytes32 = useCallback((ipfsHash: string): string => {
+    // For simplicity, we'll use the IPFS hash directly as a string
+    // and let the smart contract handle the conversion
+    // In a real implementation, you'd convert properly to bytes32
+    const encoder = new TextEncoder();
+    const data = encoder.encode(ipfsHash);
+    const hex = Array.from(data, byte => byte.toString(16).padStart(2, '0')).join('');
+    return '0x' + hex.padEnd(64, '0');
+  }, []);
+
+  // Call requestRegistration on the smart contract
+  const requestRegistration = useCallback(async (documentHashes: string[]): Promise<string | null> => {
+    if (!isConnected || !account || !window.ethereum) {
+      throw new Error('Wallet not connected');
+    }
+
+    setTxStatus({
+      isLoading: true,
+      txHash: null,
+      error: null,
+      success: false,
+    });
 
     try {
-      const txHash = await operation();
+      // Import ethers dynamically to avoid build issues
+      const { ethers } = await import('ethers');
       
-      setTransactionState({ isLoading: false, txHash, error: null });
-      
-      toast({
-        title: "Transaction Confirmed",
-        description: `${successMessage}\nTx: ${txHash.slice(0, 10)}...`,
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+      // Convert IPFS hashes to bytes32 format
+      const bytes32Hashes = documentHashes.map(hash => ipfsHashToBytes32(hash));
+
+      console.log('Calling requestRegistration with:', {
+        documentHashes,
+        bytes32Hashes,
+        contractAddress: CONTRACT_ADDRESS
       });
 
-      return txHash;
+      // Call the smart contract function
+      const tx = await contract.requestRegistration(bytes32Hashes);
+      
+      setTxStatus(prev => ({
+        ...prev,
+        txHash: tx.hash,
+      }));
+
+      // Wait for transaction confirmation
+      const receipt = await tx.wait();
+      
+      if (receipt.status === 1) {
+        setTxStatus({
+          isLoading: false,
+          txHash: tx.hash,
+          error: null,
+          success: true,
+        });
+        return tx.hash;
+      } else {
+        throw new Error('Transaction failed');
+      }
     } catch (error: any) {
-      const errorMessage = error.message || "Transaction failed";
-      setTransactionState({ isLoading: false, txHash: null, error: errorMessage });
+      console.error('Blockchain transaction error:', error);
+      let errorMessage = 'Transaction failed';
       
-      toast({
-        title: "Transaction Failed",
-        description: errorMessage,
-        variant: "destructive",
+      if (error.code === 'ACTION_REJECTED') {
+        errorMessage = 'Transaction rejected by user';
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient funds for gas';
+      } else if (error.message?.includes('user rejected')) {
+        errorMessage = 'Transaction rejected by user';
+      } else if (error.reason) {
+        errorMessage = error.reason;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setTxStatus({
+        isLoading: false,
+        txHash: null,
+        error: errorMessage,
+        success: false,
       });
       
-      throw error;
+      throw new Error(errorMessage);
     }
-  };
+  }, [isConnected, account, ipfsHashToBytes32]);
 
-  const signMessage = async (message: string): Promise<string> => {
-    try {
-      const signature = await web3Service.signMessage(message);
-      
-      toast({
-        title: "Message Signed",
-        description: "Successfully signed the message",
-      });
-      
-      return signature;
-    } catch (error: any) {
-      toast({
-        title: "Signing Failed",
-        description: error.message || "Failed to sign message",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
-  // Mock smart contract interactions
-  const registerUser = async (userData: any): Promise<string> => {
-    return executeTransaction(
-      async () => {
-        // Simulate blockchain delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return `0x${Math.random().toString(16).substr(2, 64)}`;
-      },
-      "User registration submitted to blockchain"
-    );
-  };
-
-  const verifyUser = async (userAddress: string, isApproved: boolean): Promise<string> => {
-    return executeTransaction(
-      async () => {
-        // Simulate blockchain delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return `0x${Math.random().toString(16).substr(2, 64)}`;
-      },
-      `User ${isApproved ? 'approved' : 'rejected'} on blockchain`
-    );
-  };
-
-  const fileFIR = async (firData: any): Promise<string> => {
-    return executeTransaction(
-      async () => {
-        // Simulate blockchain delay
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        return `0x${Math.random().toString(16).substr(2, 64)}`;
-      },
-      "FIR filed and recorded on blockchain"
-    );
-  };
-
-  const updateFIRStatus = async (firId: string, newStatus: string): Promise<string> => {
-    return executeTransaction(
-      async () => {
-        // Simulate blockchain delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return `0x${Math.random().toString(16).substr(2, 64)}`;
-      },
-      `FIR status updated to ${newStatus}`
-    );
-  };
-
-  const assignOfficer = async (firId: string, officerAddress: string): Promise<string> => {
-    return executeTransaction(
-      async () => {
-        // Simulate blockchain delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return `0x${Math.random().toString(16).substr(2, 64)}`;
-      },
-      "Officer assigned to FIR on blockchain"
-    );
-  };
+  // Reset transaction status
+  const resetTxStatus = useCallback(() => {
+    setTxStatus({
+      isLoading: false,
+      txHash: null,
+      error: null,
+      success: false,
+    });
+  }, []);
 
   return {
-    transactionState,
-    signMessage,
-    registerUser,
-    verifyUser,
-    fileFIR,
-    updateFIRStatus,
-    assignOfficer,
+    requestRegistration,
+    txStatus,
+    resetTxStatus,
+    ipfsHashToBytes32,
   };
 }
