@@ -7,6 +7,7 @@ import WalletConnection from "./wallet-connection";
 import RoleBadge from "./role-badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import type { User } from "@shared/schema";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -16,7 +17,7 @@ export default function Layout({ children }: LayoutProps) {
   const { account, isConnected } = useWallet();
   const [location] = useLocation();
 
-  const { data: user } = useQuery({
+  const { data: user } = useQuery<User>({
     queryKey: ['/api/users/me', account],
     enabled: !!account && isConnected,
   });

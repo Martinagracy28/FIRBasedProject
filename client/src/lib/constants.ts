@@ -49,6 +49,7 @@ export const NAVIGATION = {
     { href: '/fir-tracking', label: 'My Reports', icon: 'history' },
   ],
   [ROLES.NONE]: [
+    { href: '/dashboard', label: 'Dashboard', icon: 'chart-line' },
     { href: '/register', label: 'Register', icon: 'user-plus' },
     { href: '/waiting-approval', label: 'Approval Status', icon: 'clock' },
   ],
