@@ -206,9 +206,7 @@ export default function VerifyUsers() {
       <TransactionModal
         isOpen={showTxModal}
         onClose={() => setShowTxModal(false)}
-        isLoading={transactionState.isLoading}
-        txHash={transactionState.txHash}
-        error={transactionState.error}
+        transactionState={transactionState || { isLoading: false, txHash: null, error: null }}
         title="User Verification"
         description={`Please confirm the transaction to ${currentAction} the user on blockchain.`}
       />

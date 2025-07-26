@@ -223,9 +223,7 @@ export default function UserRegistration() {
       <TransactionModal
         isOpen={showTxModal}
         onClose={() => setShowTxModal(false)}
-        isLoading={txStatus.isLoading}
-        txHash={txStatus.txHash}
-        error={txStatus.error}
+        transactionState={txStatus || { isLoading: false, txHash: null, error: null }}
         title="User Registration"
         description="Please confirm the transaction in MetaMask and wait for blockchain confirmation."
       />

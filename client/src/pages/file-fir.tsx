@@ -304,9 +304,7 @@ export default function FileFir() {
       <TransactionModal
         isOpen={showTxModal}
         onClose={() => setShowTxModal(false)}
-        isLoading={transactionState.isLoading}
-        txHash={transactionState.txHash}
-        error={transactionState.error}
+        transactionState={transactionState || { isLoading: false, txHash: null, error: null }}
         title="Filing FIR"
         description="Please confirm the transaction in MetaMask and wait for blockchain confirmation."
       />
