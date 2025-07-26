@@ -25,7 +25,7 @@ export default function ManageOfficers() {
   const { account } = useWallet();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { registerUser, transactionState } = useBlockchain();
+  const { addOfficerToBlockchain, transactionState } = useBlockchain();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showTxModal, setShowTxModal] = useState(false);
 
@@ -54,10 +54,8 @@ export default function ManageOfficers() {
     mutationFn: async (data: OfficerFormData) => {
       // Submit to blockchain first
       setShowTxModal(true);
-      const txHash = await registerUser({
-        walletAddress: data.walletAddress,
-        documentHashes: []
-      });
+      // Use the specific addOfficer blockchain function
+      const txHash = await addOfficerToBlockchain(data.walletAddress);
       
       // Create officer in database
       const response = await apiRequest("POST", "/api/officers", data);

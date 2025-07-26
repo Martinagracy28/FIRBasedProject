@@ -168,12 +168,82 @@ export function useBlockchain() {
     return requestRegistration([assignHash]);
   }, [requestRegistration, ipfsHashToBytes32]);
 
+  // Add officer to blockchain using the addOfficer smart contract function
+  const addOfficerToBlockchain = useCallback(async (officerWalletAddress: string): Promise<string | null> => {
+    if (!isConnected || !account || !window.ethereum) {
+      throw new Error('Wallet not connected');
+    }
+
+    setTxStatus({
+      isLoading: true,
+      txHash: null,
+      error: null,
+      success: false,
+    });
+
+    try {
+      // Import ethers dynamically to avoid build issues
+      const { ethers } = await import('ethers');
+      
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+      // Call addOfficer function on the smart contract
+      const tx = await contract.addOfficer(officerWalletAddress);
+      
+      setTxStatus({
+        isLoading: true,
+        txHash: tx.hash,
+        error: null,
+        success: false,
+      });
+
+      // Wait for transaction confirmation
+      const receipt = await tx.wait();
+      
+      setTxStatus({
+        isLoading: false,
+        txHash: tx.hash,
+        error: null,
+        success: true,
+      });
+
+      console.log('Officer added to blockchain:', receipt);
+      return tx.hash;
+    } catch (error: any) {
+      let errorMessage = 'Transaction failed';
+      
+      if (error.code === 'ACTION_REJECTED') {
+        errorMessage = 'Transaction rejected by user';
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient funds for gas';
+      } else if (error.message?.includes('user rejected')) {
+        errorMessage = 'Transaction rejected by user';
+      } else if (error.reason) {
+        errorMessage = error.reason;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setTxStatus({
+        isLoading: false,
+        txHash: null,
+        error: errorMessage,
+        success: false,
+      });
+      
+      throw new Error(errorMessage);
+    }
+  }, [isConnected, account]);
+
   return {
     requestRegistration,
     registerUser,
     fileFIR,
     updateFIRStatus,
     assignOfficer,
+    addOfficerToBlockchain,
     transactionState: txStatus,
     resetTxStatus,
     ipfsHashToBytes32,
