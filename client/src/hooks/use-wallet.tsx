@@ -30,6 +30,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         setIsConnected(true);
         
         const chainId = await web3Service.getCurrentNetwork();
+        console.log('Current chainId:', chainId, 'Expected:', SEPOLIA_CHAIN_ID);
         setIsCorrectNetwork(chainId === SEPOLIA_CHAIN_ID);
       } else {
         setAccount(null);
@@ -62,7 +63,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       if (accounts.length > 0) {
         setAccount(accounts[0]);
         setIsConnected(true);
-        setIsCorrectNetwork(true);
+        
+        // Check network after connection
+        const chainId = await web3Service.getCurrentNetwork();
+        setIsCorrectNetwork(chainId === SEPOLIA_CHAIN_ID);
         
         toast({
           title: "Wallet Connected",
