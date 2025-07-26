@@ -16,6 +16,9 @@ export interface User {
 export interface Officer {
   id: string;
   userId: string;
+  name: string;
+  phone: string;
+  walletAddress: string;
   badgeNumber: string;
   department: string;
   activeCases: number;
@@ -59,9 +62,11 @@ export const insertUserSchema = z.object({
 });
 
 export const insertOfficerSchema = z.object({
-  userId: z.string().min(1),
-  badgeNumber: z.string().min(1),
-  department: z.string().min(1),
+  name: z.string().min(1, "Officer name is required"),
+  phone: z.string().min(1, "Phone number is required"),
+  walletAddress: z.string().min(1, "Wallet address is required"),
+  badgeNumber: z.string().min(1, "Badge number is required"),
+  department: z.string().min(1, "Department is required"),
 });
 
 export const insertFirSchema = z.object({

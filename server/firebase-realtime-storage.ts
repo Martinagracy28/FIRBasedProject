@@ -152,12 +152,17 @@ export class FirebaseRealtimeStorage implements IStorage {
   }
 
   // Officer management
-  async createOfficer(officerData: InsertOfficer): Promise<Officer> {
+  async createOfficer(officerData: any): Promise<Officer> {
     const id = this.generateId();
     const officerRef = ref(db, `officers/${id}`);
     
     const officerRecord = {
-      ...officerData,
+      userId: officerData.userId,
+      name: officerData.name,
+      phone: officerData.phone,
+      walletAddress: officerData.walletAddress.toLowerCase(),
+      badgeNumber: officerData.badgeNumber,
+      department: officerData.department,
       activeCases: 0,
       closedCases: 0,
       createdAt: serverTimestamp()

@@ -68,7 +68,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/officers", async (req, res) => {
     try {
       const officerData = insertOfficerSchema.parse(req.body);
-      const officer = await storage.createOfficer(officerData);
+      
+      // First create user account for the officer
+      const userData = {
+        walletAddress: officerData.walletAddress,
+        documentHashes: []
+      };
+      
+      const user = await storage.createUser(userData);
+      
+      // Immediately verify the user and set role to officer
+      await storage.updateUserStatus(user.id, 'verified');
+      
+      // Create officer record with all required fields
+      const officerRecord = {
+        userId: user.id,
+        name: officerData.name,
+        phone: officerData.phone,
+        walletAddress: officerData.walletAddress,
+        badgeNumber: officerData.badgeNumber,
+        department: officerData.department
+      };
+      
+      const officer = await storage.createOfficer(officerRecord);
       res.status(201).json(officer);
     } catch (error) {
       if (error instanceof z.ZodError) {
