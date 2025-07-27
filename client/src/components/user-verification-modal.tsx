@@ -51,14 +51,14 @@ export default function UserVerificationModal({
   const verifyUserMutation = useMutation({
     mutationFn: async ({ status }: { status: 'verified' | 'rejected' }) => {
       if (!userDetails) throw new Error('User details not available');
-      
+
       // Update in our system
       const response = await apiRequest("PATCH", `/api/users/${userDetails.id}/status`, {
         status,
         verifiedBy: currentUser?.id,
       });
       const updatedUser = await response.json();
-      
+
       // Submit to blockchain
       setShowTxModal(true);
       setCurrentAction(status === 'verified' ? 'approving' : 'rejecting');
@@ -66,7 +66,7 @@ export default function UserVerificationModal({
         userAddress: updatedUser.walletAddress,
         verified: status === 'verified'
       });
-      
+
       return { updatedUser, txHash };
     },
     onSuccess: (_, variables) => {
@@ -98,7 +98,7 @@ export default function UserVerificationModal({
   const viewDocument = (documentHash: string) => {
     // Check if this is a mock hash (contains many zeros or doesn't start with Qm)
     const isMockHash = !documentHash.startsWith('Qm') || documentHash.includes('00000000000');
-    
+
     if (isMockHash) {
       toast({
         title: "Development Mode",
@@ -107,17 +107,17 @@ export default function UserVerificationModal({
       });
       return;
     }
-    
+
     // For valid IPFS hashes, try to open from multiple gateways
     const gateways = [
       `https://ipfs.io/ipfs/${documentHash}`,
       `https://gateway.pinata.cloud/ipfs/${documentHash}`,
       `https://dweb.link/ipfs/${documentHash}`
     ];
-    
+
     // Try opening with the first gateway, with fallback options
     window.open(gateways[0], '_blank');
-    
+
     // Show info toast about the hash
     toast({
       title: "Opening IPFS Document",
@@ -196,9 +196,9 @@ export default function UserVerificationModal({
                       </p>
                     </div>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="flex items-center space-x-2">
                       <Calendar className="text-gray-500" size={16} />
@@ -207,7 +207,7 @@ export default function UserVerificationModal({
                         <p className="text-sm text-gray-600">{formatDate(userDetails.createdAt)}</p>
                       </div>
                     </div>
-                    
+
                     {userDetails.verifiedAt && (
                       <div className="flex items-center space-x-2">
                         <Clock className="text-gray-500" size={16} />
@@ -217,7 +217,7 @@ export default function UserVerificationModal({
                         </div>
                       </div>
                     )}
-                    
+
                     {userDetails.verifiedBy && (
                       <div className="flex items-center space-x-2">
                         <Shield className="text-gray-500" size={16} />

@@ -112,14 +112,39 @@ class IPFSService {
   }
 
   getGatewayUrl(hash: string): string {
+    // For mock hashes, return a placeholder URL
+    if (hash.includes('000000000') || hash.length !== 46 || !hash.startsWith('Qm')) {
+      return `#mock-hash-${hash}`;
+    }
+    
     return `https://gateway.pinata.cloud/ipfs/${hash}`;
   }
 
   async validateHash(hash: string): Promise<boolean> {
     try {
-      const response = await fetch(`https://gateway.pinata.cloud/ipfs/${hash}`, { method: 'HEAD' });
+      // First check if hash format is valid
+      if (!hash || hash.length !== 46 || !hash.startsWith('Qm')) {
+        return false;
+      }
+      
+      // Check if it's a mock hash with repeated zeros
+      if (hash.includes('000000000')) {
+        return false;
+      }
+      
+      // Try to fetch the hash with a timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
+      const response = await fetch(`https://gateway.pinata.cloud/ipfs/${hash}`, { 
+        method: 'HEAD',
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
       return response.ok;
-    } catch {
+    } catch (error) {
+      console.log('Hash validation failed:', error);
       return false;
     }
   }
