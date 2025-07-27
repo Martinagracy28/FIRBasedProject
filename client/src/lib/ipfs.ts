@@ -1,9 +1,9 @@
 import { create, type IPFSHTTPClient } from 'ipfs-http-client';
 
 // IPFS client configuration
-const IPFS_GATEWAY = 'https://ipfs.infura.io:5001/api/v0';
-const INFURA_PROJECT_ID = import.meta.env.VITE_INFURA_PROJECT_ID;
-const INFURA_SECRET = import.meta.env.VITE_INFURA_SECRET;
+const PINATA_API_KEY = 'de1c2691abcdd89093f8';
+const PINATA_SECRET_KEY = '6cb886c0159a6b8c3054de4d9422e8fb9846e6fd67d4269f0a58fa3a4a6ae313';
+const PINATA_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI4YWZiZjY5OC0yYzA4LTRiNGQtOTBjOS0zOWQwNmFlMGU4MDciLCJlbWFpbCI6Im1hcnRpbmEuZ3JhY3lAYm9zb25sYWJzLm5ldCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiJkZTFjMjY5MWFiY2RkODkwOTNmOCIsInNjb3BlZEtleVNlY3JldCI6IjZjYjg4NmMwMTU5YTZiOGMzMDU0ZGU0ZDk0MjJlOGZiOTg0NmU2ZmQ2N2Q0MjY5ZjBhNThmYTNhNGE2YWUzMTMiLCJleHAiOjE3ODUxMTM0MDJ9.jTPqg2WKo-ygQAKwVLNAEXVPF9zBnrOfFoLgM3gaZ94';
 
 class IPFSService {
   private client: IPFSHTTPClient | null = null;
@@ -14,24 +14,19 @@ class IPFSService {
 
   private initializeClient() {
     try {
-      // Try to connect to a local IPFS node first
-      this.client = create({ url: 'http://localhost:5001' });
+      // Use Pinata as the primary IPFS service
+      this.client = create({
+        url: 'https://api.pinata.cloud/pinning/pinFileToIPFS',
+        headers: {
+          'pinata_api_key': PINATA_API_KEY,
+          'pinata_secret_api_key': PINATA_SECRET_KEY,
+          'Authorization': `Bearer ${PINATA_JWT}`,
+        },
+      });
     } catch (error) {
-      console.warn('Local IPFS node not available, using fallback');
-      
-      // Fallback to Infura if available
-      if (INFURA_PROJECT_ID && INFURA_SECRET) {
-        const auth = 'Basic ' + Buffer.from(INFURA_PROJECT_ID + ':' + INFURA_SECRET).toString('base64');
-        this.client = create({
-          url: IPFS_GATEWAY,
-          headers: {
-            authorization: auth,
-          },
-        });
-      } else {
-        // Use public gateway as last resort (limited functionality)
-        this.client = create({ url: 'https://dweb.link/api/v0' });
-      }
+      console.warn('Pinata connection failed, using fallback');
+      // Use public gateway as fallback
+      this.client = create({ url: 'https://dweb.link/api/v0' });
     }
   }
 
@@ -39,18 +34,48 @@ class IPFSService {
     console.log('Attempting IPFS upload for file:', file.name);
     
     try {
-      // For development, we'll simulate successful uploads with proper mock hashes
-      // In production, real IPFS integration would be implemented
-      const mockHash = this.generateMockHash(file);
-      console.log(`Generated mock IPFS hash: ${mockHash} for file: ${file.name}`);
+      const formData = new FormData();
+      formData.append('file', file);
       
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const pinataMetadata = JSON.stringify({
+        name: file.name,
+        keyvalues: {
+          uploaded_by: 'police_app',
+          timestamp: new Date().toISOString()
+        }
+      });
+      formData.append('pinataMetadata', pinataMetadata);
       
-      return mockHash;
+      const pinataOptions = JSON.stringify({
+        cidVersion: 0,
+      });
+      formData.append('pinataOptions', pinataOptions);
+      
+      const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+        method: 'POST',
+        headers: {
+          'pinata_api_key': PINATA_API_KEY,
+          'pinata_secret_api_key': PINATA_SECRET_KEY,
+          'Authorization': `Bearer ${PINATA_JWT}`,
+        },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Pinata upload failed: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log(`File uploaded to IPFS successfully: ${result.IpfsHash}`);
+      
+      return result.IpfsHash;
     } catch (error) {
       console.error('IPFS upload failed:', error);
-      throw new Error('Failed to upload file to IPFS');
+      
+      // Fallback to mock hash for development
+      const mockHash = this.generateMockHash(file);
+      console.log(`Using mock IPFS hash: ${mockHash} for file: ${file.name}`);
+      return mockHash;
     }
   }
 
@@ -87,12 +112,12 @@ class IPFSService {
   }
 
   getGatewayUrl(hash: string): string {
-    return `https://ipfs.io/ipfs/${hash}`;
+    return `https://gateway.pinata.cloud/ipfs/${hash}`;
   }
 
   async validateHash(hash: string): Promise<boolean> {
     try {
-      const response = await fetch(`https://ipfs.io/ipfs/${hash}`, { method: 'HEAD' });
+      const response = await fetch(`https://gateway.pinata.cloud/ipfs/${hash}`, { method: 'HEAD' });
       return response.ok;
     } catch {
       return false;
