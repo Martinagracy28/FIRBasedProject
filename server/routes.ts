@@ -5,6 +5,15 @@ import { insertUserSchema, insertOfficerSchema, insertFirSchema, insertFirUpdate
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint
+  app.get("/api/health", (req, res) => {
+    res.status(200).json({ 
+      status: "healthy", 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+  });
+
   // User management routes
   app.get("/api/users/me/:walletAddress", async (req, res) => {
     try {
@@ -239,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (isOfficer) {
         // Update role to officer
-        const updatedUser = await storage.updateUserStatus(id, user.status, user.verifiedBy);
+        const updatedUser = await storage.updateUserStatus(id, user.status, user.verifiedBy || undefined);
         res.json(updatedUser);
       } else {
         res.status(400).json({ message: "User is not an officer" });
