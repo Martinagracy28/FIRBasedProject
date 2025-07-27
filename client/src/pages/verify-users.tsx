@@ -35,25 +35,44 @@ export default function VerifyUsers() {
 
   const verifyUserMutation = useMutation({
     mutationFn: async ({ userId, status }: { userId: string; status: 'verified' | 'rejected' }) => {
-      // Update in our system
-      const response = await apiRequest("PATCH", `/api/users/${userId}/status`, {
-        status,
-        verifiedBy: user?.id,
-      });
-      const updatedUser = await response.json();
+      const currentUser = pendingUsers?.find(u => u.id === userId);
+      if (!currentUser) throw new Error('User not found');
       
-      // Submit to blockchain only if approving (verifying)
-      if (status === 'verified') {
-        setShowTxModal(true);
-        setCurrentAction('approving');
-        const txHash = await verifyUserOnBlockchain(updatedUser.walletAddress);
-        return { updatedUser, txHash };
-      } else {
-        // For rejection, just update database without blockchain transaction
+      // For rejection, just update database without blockchain transaction
+      if (status === 'rejected') {
+        const response = await apiRequest("PATCH", `/api/users/${userId}/status`, {
+          status,
+          verifiedBy: user?.id,
+        });
+        const updatedUser = await response.json();
         return { updatedUser, txHash: null };
       }
+      
+      // For approval: first show transaction modal, then do blockchain transaction
+      setShowTxModal(true);
+      setCurrentAction('approving');
+      
+      try {
+        // Submit to blockchain first
+        const txHash = await verifyUserOnBlockchain(currentUser.walletAddress);
+        
+        // Only update database status after blockchain success
+        const response = await apiRequest("PATCH", `/api/users/${userId}/status`, {
+          status: 'verified',
+          verifiedBy: user?.id,
+        });
+        const updatedUser = await response.json();
+        
+        return { updatedUser, txHash };
+      } catch (error) {
+        // If blockchain fails, don't update database
+        setShowTxModal(false);
+        setCurrentAction("");
+        throw error;
+      }
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
+      // Only invalidate queries after everything is complete
       queryClient.invalidateQueries({ queryKey: ['/api/users/pending'] });
       toast({
         title: `User ${variables.status === 'verified' ? 'Approved' : 'Rejected'}`,
@@ -68,8 +87,10 @@ export default function VerifyUsers() {
       });
     },
     onSettled: () => {
-      setTimeout(() => setShowTxModal(false), 3000);
-      setCurrentAction("");
+      setTimeout(() => {
+        setShowTxModal(false);
+        setCurrentAction("");
+      }, 3000);
     },
   });
 
@@ -146,7 +167,7 @@ export default function VerifyUsers() {
                       <p className="text-sm text-gray-600 font-mono">{pendingUser.walletAddress}</p>
                       <p className="text-xs text-gray-500 flex items-center space-x-1">
                         <Clock size={12} />
-                        <span>Submitted: {new Date(pendingUser.createdAt.toDate ? pendingUser.createdAt.toDate() : pendingUser.createdAt).toLocaleString()}</span>
+                        <span>Submitted: {new Date((pendingUser.createdAt as any).toDate?.() || pendingUser.createdAt).toLocaleString()}</span>
                       </p>
                       <p className="text-xs text-gray-500 flex items-center space-x-1">
                         <FileText size={12} />

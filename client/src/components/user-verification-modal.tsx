@@ -52,22 +52,37 @@ export default function UserVerificationModal({
     mutationFn: async ({ status }: { status: 'verified' | 'rejected' }) => {
       if (!userDetails) throw new Error('User details not available');
 
-      // Update in our system
-      const response = await apiRequest("PATCH", `/api/users/${userDetails.id}/status`, {
-        status,
-        verifiedBy: currentUser?.id,
-      });
-      const updatedUser = await response.json();
-
-      // Submit to blockchain only if approving (verifying)
-      if (status === 'verified') {
-        setShowTxModal(true);
-        setCurrentAction('approving');
-        const txHash = await verifyUserOnBlockchain(updatedUser.walletAddress);
-        return { updatedUser, txHash };
-      } else {
-        // For rejection, just update database without blockchain transaction
+      // For rejection, just update database without blockchain transaction
+      if (status === 'rejected') {
+        const response = await apiRequest("PATCH", `/api/users/${userDetails.id}/status`, {
+          status,
+          verifiedBy: currentUser?.id,
+        });
+        const updatedUser = await response.json();
         return { updatedUser, txHash: null };
+      }
+
+      // For approval: first show transaction modal, then do blockchain transaction
+      setShowTxModal(true);
+      setCurrentAction('approving');
+      
+      try {
+        // Submit to blockchain first
+        const txHash = await verifyUserOnBlockchain(userDetails.walletAddress);
+        
+        // Only update database status after blockchain success
+        const response = await apiRequest("PATCH", `/api/users/${userDetails.id}/status`, {
+          status: 'verified',
+          verifiedBy: currentUser?.id,
+        });
+        const updatedUser = await response.json();
+        
+        return { updatedUser, txHash };
+      } catch (error) {
+        // If blockchain fails, don't update database
+        setShowTxModal(false);
+        setCurrentAction("");
+        throw error;
       }
     },
     onSuccess: (_, variables) => {

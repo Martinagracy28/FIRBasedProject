@@ -17,6 +17,8 @@ Preferred communication style: Simple, everyday language.
 - **Error Resolution**: Fixed "Officers cannot self-register as users" error by using correct wallet address parameter
 - **Component Updates**: Updated both user verification modal and verify-users page to use proper blockchain function
 - **TypeScript Fixes**: Resolved all TypeScript type errors in blockchain hook functions
+- **Transaction Flow Fix**: Restructured user verification to keep users visible until MetaMask transaction completes
+- **UI State Management**: Fixed premature user removal from pending list - now waits for blockchain confirmation
 
 ### January 26, 2025
 - **IPFS File Upload Integration**: Added full IPFS support with drag-and-drop file upload component
