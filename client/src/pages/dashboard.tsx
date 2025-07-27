@@ -66,8 +66,8 @@ export default function Dashboard() {
     );
   }
 
-  // Handle pending verification
-  if (user.role === ROLES.NONE && user.status === 'pending') {
+  // Handle pending verification  
+  if (user && user.role === ROLES.NONE && user.status === 'pending') {
     return (
       <div className="space-y-6">
         <div className="text-center py-12">
@@ -114,7 +114,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total FIRs</p>
-                <p className="text-3xl font-bold text-gray-900">{stats?.totalFirs || 0}</p>
+                <p className="text-3xl font-bold text-gray-900">{(stats as any)?.totalFirs || 0}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-pink-500 rounded-lg flex items-center justify-center">
                 <FileText className="text-white" size={20} />
@@ -133,7 +133,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pending Verification</p>
-                <p className="text-3xl font-bold text-orange-600">{stats?.pendingVerification || 0}</p>
+                <p className="text-3xl font-bold text-orange-600">{(stats as any)?.pendingVerification || 0}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
                 <AlertCircle className="text-white" size={20} />
@@ -151,7 +151,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Officers</p>
-                <p className="text-3xl font-bold text-green-600">{stats?.activeOfficers || 0}</p>
+                <p className="text-3xl font-bold text-green-600">{(stats as any)?.activeOfficers || 0}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-green-600 rounded-lg flex items-center justify-center">
                 <Users className="text-white" size={20} />
@@ -169,7 +169,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Closed Cases</p>
-                <p className="text-3xl font-bold text-blue-600">{stats?.closedCases || 0}</p>
+                <p className="text-3xl font-bold text-blue-600">{(stats as any)?.closedCases || 0}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
                 <CheckCircle className="text-white" size={20} />
@@ -200,7 +200,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="space-y-4">
-              {recentFirs?.slice(0, 5).map((fir: any) => (
+              {(recentFirs as any)?.slice(0, 5).map((fir: any) => (
                 <div key={fir.id} className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-500 rounded-full flex items-center justify-center">

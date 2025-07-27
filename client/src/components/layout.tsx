@@ -25,6 +25,16 @@ export default function Layout({ children }: LayoutProps) {
   const userRole = user?.role || ROLES.NONE;
   const navigationItems = NAVIGATION[userRole as keyof typeof NAVIGATION] || [];
 
+  // Debug logging for development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Layout Debug:', { 
+      account, 
+      userRole, 
+      userStatus: user?.status,
+      navigationItems: navigationItems.map(item => item.label)
+    });
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
       {/* Header */}
