@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### January 27, 2025
+- **Replit Agent Migration**: Successfully migrated project from Replit Agent to standard Replit environment
+- **User Verification Fix**: Fixed critical user verification blockchain integration issue - officers can now properly approve users
+- **Blockchain Integration**: Added proper `verifyUserOnBlockchain` function that calls the smart contract's `verifyUser(address)` method
+- **Error Resolution**: Fixed "Officers cannot self-register as users" error by using correct wallet address parameter
+- **Component Updates**: Updated both user verification modal and verify-users page to use proper blockchain function
+- **TypeScript Fixes**: Resolved all TypeScript type errors in blockchain hook functions
+
 ### January 26, 2025
 - **IPFS File Upload Integration**: Added full IPFS support with drag-and-drop file upload component
 - **Simplified User Registration**: Removed name, email, and phone fields - now only requires wallet address and document uploads  
@@ -21,7 +29,6 @@ Preferred communication style: Simple, everyday language.
 - **Admin Setup**: Created admin user system for officer management access control
 - **TransactionModal Fixes**: Fixed all runtime errors with TransactionModal components across user registration, FIR filing, and officer management
 - **UI Testing Complete**: Verified officer management system works perfectly with 2 active officers in Firebase database
-- **Replit Migration Complete**: Successfully migrated project from Replit Agent to standard Replit environment
 - **Enhanced User Verification**: Added comprehensive user verification modal with detailed document viewing and IPFS integration
 - **API Enhancement**: Added `/api/users/details/:walletAddress` endpoint for detailed user information retrieval
 - **Officer Verification Module**: Created comprehensive verifyUser functionality with detailed modal showing user documents, wallet info, and verification controls

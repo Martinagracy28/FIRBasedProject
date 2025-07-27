@@ -147,25 +147,29 @@ export function useBlockchain() {
 
   // Placeholder functions for missing blockchain operations
   const registerUser = useCallback(async (userData: any): Promise<string> => {
-    return requestRegistration(userData.documentHashes || []);
+    const result = await requestRegistration(userData.documentHashes || []);
+    return result || '';
   }, [requestRegistration]);
 
   const fileFIR = useCallback(async (firData: any): Promise<string> => {
     // Convert FIR data to IPFS hash and register on blockchain
     const firHash = ipfsHashToBytes32(JSON.stringify(firData));
-    return requestRegistration([firHash]);
+    const result = await requestRegistration([firHash]);
+    return result || '';
   }, [requestRegistration, ipfsHashToBytes32]);
 
   const updateFIRStatus = useCallback(async (firId: string, status: string): Promise<string> => {
     // Update FIR status on blockchain
     const statusHash = ipfsHashToBytes32(`${firId}_${status}_${Date.now()}`);
-    return requestRegistration([statusHash]);
+    const result = await requestRegistration([statusHash]);
+    return result || '';
   }, [requestRegistration, ipfsHashToBytes32]);
 
   const assignOfficer = useCallback(async (firId: string, officerId: string): Promise<string> => {
     // Assign officer on blockchain
     const assignHash = ipfsHashToBytes32(`${firId}_officer_${officerId}_${Date.now()}`);
-    return requestRegistration([assignHash]);
+    const result = await requestRegistration([assignHash]);
+    return result || '';
   }, [requestRegistration, ipfsHashToBytes32]);
 
   // Add officer to blockchain using the addOfficer smart contract function
@@ -237,9 +241,85 @@ export function useBlockchain() {
     }
   }, [isConnected, account]);
 
+  // Verify user on blockchain using the verifyUser smart contract function
+  const verifyUserOnBlockchain = useCallback(async (userAddress: string): Promise<string | null> => {
+    if (!isConnected || !account || !window.ethereum) {
+      throw new Error('Wallet not connected');
+    }
+
+    setTxStatus({
+      isLoading: true,
+      txHash: null,
+      error: null,
+      success: false,
+    });
+
+    try {
+      // Import ethers dynamically to avoid build issues
+      const { ethers } = await import('ethers');
+      
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+      console.log('Calling verifyUser with:', { userAddress, contractAddress: CONTRACT_ADDRESS });
+
+      // Call verifyUser function on the smart contract
+      const tx = await contract.verifyUser(userAddress);
+      
+      setTxStatus({
+        isLoading: true,
+        txHash: tx.hash,
+        error: null,
+        success: false,
+      });
+
+      // Wait for transaction confirmation
+      const receipt = await tx.wait();
+      
+      setTxStatus({
+        isLoading: false,
+        txHash: tx.hash,
+        error: null,
+        success: true,
+      });
+
+      console.log('User verified on blockchain:', receipt);
+      return tx.hash;
+    } catch (error: any) {
+      let errorMessage = 'Transaction failed';
+      
+      if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+        errorMessage = 'Transaction rejected by user';
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient funds for gas';
+      } else if (error.message?.includes('user rejected')) {
+        errorMessage = 'Transaction rejected by user';
+      } else if (error.message?.includes('Officers cannot self-register as users')) {
+        errorMessage = 'Officers cannot self-register as users';
+      } else if (error.reason) {
+        errorMessage = error.reason;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      console.error('User verification blockchain error:', error);
+
+      setTxStatus({
+        isLoading: false,
+        txHash: null,
+        error: errorMessage,
+        success: false,
+      });
+      
+      throw new Error(errorMessage);
+    }
+  }, [isConnected, account]);
+
   return {
     requestRegistration,
     registerUser,
+    verifyUserOnBlockchain,
     fileFIR,
     updateFIRStatus,
     assignOfficer,

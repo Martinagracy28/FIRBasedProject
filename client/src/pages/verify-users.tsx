@@ -17,7 +17,7 @@ export default function VerifyUsers() {
   const { account } = useWallet();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { registerUser, transactionState } = useBlockchain();
+  const { verifyUserOnBlockchain, transactionState } = useBlockchain();
   const [showTxModal, setShowTxModal] = useState(false);
   const [currentAction, setCurrentAction] = useState<string>("");
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -42,15 +42,16 @@ export default function VerifyUsers() {
       });
       const updatedUser = await response.json();
       
-      // Submit to blockchain
-      setShowTxModal(true);
-      setCurrentAction(status === 'verified' ? 'approving' : 'rejecting');
-      const txHash = await registerUser({
-        userAddress: updatedUser.walletAddress,
-        verified: status === 'verified'
-      });
-      
-      return { updatedUser, txHash };
+      // Submit to blockchain only if approving (verifying)
+      if (status === 'verified') {
+        setShowTxModal(true);
+        setCurrentAction('approving');
+        const txHash = await verifyUserOnBlockchain(updatedUser.walletAddress);
+        return { updatedUser, txHash };
+      } else {
+        // For rejection, just update database without blockchain transaction
+        return { updatedUser, txHash: null };
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/users/pending'] });
