@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWallet } from "@/hooks/use-wallet";
 import { useLocation } from "wouter";
-import { Clock, Shield, CheckCircle, AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
+import { Clock, Shield, CheckCircle, AlertCircle, ArrowLeft, RefreshCw, UserPlus, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ROLES } from "@/lib/constants";
 import type { User } from "@shared/schema";
 
 export default function WaitingApproval() {
@@ -38,7 +39,7 @@ export default function WaitingApproval() {
   }
 
   // If user is verified, redirect to dashboard
-  if (user && user.role !== 'none') {
+  if (user && user.role !== ROLES.NONE) {
     navigate('/dashboard');
     return null;
   }
@@ -71,133 +72,135 @@ export default function WaitingApproval() {
   const StatusIcon = statusInfo.icon;
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto">
       {/* Back Button */}
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/dashboard')}
-          className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-        >
-          <ArrowLeft className="mr-2" size={16} />
-          Back to Dashboard
-        </Button>
-      </div>
+      <Button
+        variant="ghost"
+        onClick={() => navigate('/dashboard')}
+        className="mb-6 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+      >
+        <ArrowLeft className="mr-2" size={16} />
+        Back to Dashboard
+      </Button>
 
-      <Card className="shadow-xl border-purple-100">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-3">
-            <Shield className="text-purple-600" size={24} />
-            <span>Registration Status</span>
-          </CardTitle>
-        </CardHeader>
-        
-        <CardContent className="space-y-6">
-          {/* Status Card */}
-          <div className={`${statusInfo.bgColor} ${statusInfo.borderColor} border-2 rounded-lg p-6`}>
-            <div className="flex items-center space-x-4">
-              <div className={`${statusInfo.color} p-3 rounded-full bg-white`}>
-                <StatusIcon size={32} />
+      <div className="space-y-6">
+        {/* Status Card */}
+        <Card className={`shadow-xl ${statusInfo.borderColor} border-2`}>
+          <CardHeader className={`${statusInfo.bgColor} rounded-t-lg`}>
+            <CardTitle className="flex items-center space-x-3">
+              <div className={`w-10 h-10 ${statusInfo.color} bg-white rounded-full flex items-center justify-center`}>
+                <StatusIcon size={20} />
               </div>
-              <div className="flex-1">
-                <h3 className={`text-xl font-semibold ${statusInfo.color} mb-2`}>
-                  {statusInfo.title}
-                </h3>
-                <p className="text-gray-700 mb-4">
-                  {statusInfo.description}
+              <span className={`text-xl ${statusInfo.color}`}>{statusInfo.title}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <p className="text-gray-700 mb-6">{statusInfo.description}</p>
+
+            {!user ? (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  To get started with SecureFIR, you need to register with your identity documents.
                 </p>
-                <Badge variant="secondary" className={`${statusInfo.color} ${statusInfo.bgColor}`}>
-                  {statusInfo.status === 'pending' ? 'Pending Verification' : 'Not Registered'}
-                </Badge>
+                <Button 
+                  onClick={() => navigate('/register')}
+                  className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white w-full py-3"
+                >
+                  <UserPlus className="mr-2" size={20} />
+                  Register Now
+                </Button>
               </div>
-            </div>
-          </div>
+            ) : (
+              <div className="space-y-4">
+                {/* User Details */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3">Registration Details</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Wallet Address:</span>
+                      <span className="font-mono text-xs bg-white px-2 py-1 rounded">
+                        {user.walletAddress}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Registration Date:</span>
+                      <span>
+                        {user.createdAt ? new Date(user.createdAt as any).toLocaleDateString() : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Documents Uploaded:</span>
+                      <span className="text-green-600 font-medium">
+                        {user.documentHashes?.length || 0} files
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Status:</span>
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                        {user.status === 'pending' ? 'Pending Review' : user.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
 
-          {/* User Info */}
-          {user && (
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-100">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Registration Details</h4>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Wallet Address</label>
-                  <p className="font-mono text-sm bg-white p-2 rounded border mt-1">
-                    {user.walletAddress}
-                  </p>
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={() => refetch()}
+                    variant="outline"
+                    className="flex-1 border-purple-200 text-purple-600 hover:bg-purple-50"
+                  >
+                    <RefreshCw className="mr-2" size={16} />
+                    Refresh Status
+                  </Button>
+                  <Button 
+                    onClick={() => navigate('/register')}
+                    variant="outline"
+                    className="flex-1 border-gray-200"
+                  >
+                    <ExternalLink className="mr-2" size={16} />
+                    Update Registration
+                  </Button>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Registration Date</label>
-                  <p className="text-sm text-gray-700 mt-1">
-                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) : 'Date not available'}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Documents Submitted</label>
-                  <p className="text-sm text-gray-700 mt-1">
-                    {user.documentHashes?.length || 0} document(s) uploaded to IPFS
-                  </p>
+
+                {/* Next Steps */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-blue-900 mb-2">What happens next?</h4>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Our officers will review your submitted documents</li>
+                    <li>• Verification typically takes 24-48 hours</li>
+                    <li>• You'll be notified once your account is verified</li>
+                    <li>• After verification, you can file FIRs and track cases</li>
+                  </ul>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Next Steps */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h4 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
-              <CheckCircle className="mr-2" size={20} />
-              What happens next?
-            </h4>
-            <ul className="space-y-2 text-sm text-blue-800">
-              <li className="flex items-start">
-                <span className="w-6 h-6 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">1</span>
-                <span>Our verification officers will review your submitted documents</span>
-              </li>
-              <li className="flex items-start">
-                <span className="w-6 h-6 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">2</span>
-                <span>Identity verification will be completed within 24-48 hours</span>
-              </li>
-              <li className="flex items-start">
-                <span className="w-6 h-6 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">3</span>
-                <span>Once approved, you'll have full access to file and track FIRs</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button
-              onClick={() => refetch()}
-              variant="outline"
-              className="border-purple-200 text-purple-700 hover:bg-purple-50"
-            >
-              <RefreshCw className="mr-2" size={16} />
-              Refresh Status
-            </Button>
-            
-            {!user && (
-              <Button
-                onClick={() => navigate('/register')}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              >
-                <Shield className="mr-2" size={16} />
-                Register Now
-              </Button>
             )}
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Contact Support */}
-          <div className="text-center text-sm text-gray-600 border-t pt-4">
-            <p>
-              Having issues? Contact our support team for assistance with your registration.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Help Section */}
+        <Card className="border-purple-100">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-purple-600">
+              <Shield size={20} />
+              <span>Need Help?</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 text-sm text-gray-600">
+              <p>
+                <strong>Registration Issues:</strong> Ensure all required documents are uploaded and clear.
+              </p>
+              <p>
+                <strong>Verification Delays:</strong> During peak times, verification may take longer than usual.
+              </p>
+              <p>
+                <strong>Technical Support:</strong> Contact our support team if you encounter any technical issues.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
