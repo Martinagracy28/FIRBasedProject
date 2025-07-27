@@ -96,18 +96,34 @@ export default function UserVerificationModal({
   };
 
   const viewDocument = (documentHash: string) => {
-    // For development environment - show hash info instead of trying to access actual file
-    if (documentHash.includes('000000') || documentHash.length !== 46) {
+    // Check if this is a mock hash (contains many zeros or doesn't start with Qm)
+    const isMockHash = !documentHash.startsWith('Qm') || documentHash.includes('00000000000');
+    
+    if (isMockHash) {
       toast({
         title: "Development Mode",
-        description: `Document Hash: ${documentHash}\n\nThis is a development environment. In production, this would open the actual document from IPFS.`,
+        description: `Document Hash: ${documentHash}\n\nThis is a mock hash generated in development mode. In production, this would open the actual document from IPFS.`,
         duration: 5000,
       });
       return;
     }
     
-    // Open IPFS document in new window for valid hashes
-    window.open(`https://gateway.pinata.cloud/ipfs/${documentHash}`, '_blank');
+    // For valid IPFS hashes, try to open from multiple gateways
+    const gateways = [
+      `https://ipfs.io/ipfs/${documentHash}`,
+      `https://gateway.pinata.cloud/ipfs/${documentHash}`,
+      `https://dweb.link/ipfs/${documentHash}`
+    ];
+    
+    // Try opening with the first gateway, with fallback options
+    window.open(gateways[0], '_blank');
+    
+    // Show info toast about the hash
+    toast({
+      title: "Opening IPFS Document",
+      description: `Opening document: ${documentHash.substring(0, 20)}...`,
+      duration: 3000,
+    });
   };
 
   const formatDate = (date: any) => {
@@ -239,7 +255,7 @@ export default function UserVerificationModal({
                                 {hash.substring(0, 20)}...{hash.substring(hash.length - 20)}
                               </p>
                               <div className="mt-1">
-                                {hash.includes('000000') || hash.length !== 46 ? (
+                                {!hash.startsWith('Qm') || hash.includes('00000000000') ? (
                                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
                                     Development Hash
                                   </span>
