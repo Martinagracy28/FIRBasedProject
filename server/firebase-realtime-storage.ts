@@ -175,6 +175,20 @@ export class FirebaseRealtimeStorage implements IStorage {
     });
   }
 
+  async updateUserRole(userId: string, role: string): Promise<User | undefined> {
+    const userRef = ref(db, `users/${userId}`);
+    await update(userRef, {
+      role,
+      updatedAt: serverTimestamp(),
+    });
+
+    const snapshot = await get(userRef);
+    if (snapshot.exists()) {
+      return { id: userId, ...snapshot.val() } as User;
+    }
+    return undefined;
+  }
+
   // Officer management
   async createOfficer(officerData: any): Promise<Officer> {
     const id = this.generateId();

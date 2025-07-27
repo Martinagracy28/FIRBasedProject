@@ -18,6 +18,7 @@ export interface IStorage {
   getUserByWallet(walletAddress: string): Promise<UserWithRole | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserStatus(id: string, status: string, verifiedBy?: string): Promise<User | undefined>;
+  updateUserRole(id: string, role: string): Promise<User | undefined>;
   getPendingUsers(): Promise<User[]>;
   
   // Officer management
