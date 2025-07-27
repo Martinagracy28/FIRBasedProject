@@ -52,6 +52,105 @@ export function useBlockchain() {
     }
   }, []);
 
+  // Call fileFIR on the smart contract
+  const fileFIR = useCallback(async (firData: {
+    complainantName: string;
+    complainantContact: string;
+    incidentType: string;
+    incidentDate: Date;
+    incidentLocation: string;
+    description: string;
+    suspects: string[];
+    victims: string[];
+    witnesses: string[];
+    evidenceHashes: string[];
+  }): Promise<string | null> => {
+    if (!isConnected || !account || !window.ethereum) {
+      throw new Error('Wallet not connected');
+    }
+
+    setTxStatus({
+      isLoading: true,
+      txHash: null,
+      error: null,
+      success: false,
+    });
+
+    try {
+      // Import ethers dynamically to avoid build issues
+      const { ethers } = await import('ethers');
+      
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+      // Convert incident date to Unix timestamp
+      const incidentDateTime = Math.floor(firData.incidentDate.getTime() / 1000);
+
+      // Convert evidence IPFS hashes to bytes32 format
+      const evidenceHashesBytes32 = firData.evidenceHashes.map(hash => ipfsHashToBytes32(hash));
+
+      console.log('Filing FIR with data:', {
+        complainantName: firData.complainantName,
+        complainantContact: firData.complainantContact,
+        incidentType: firData.incidentType,
+        incidentDateTime,
+        incidentLocation: firData.incidentLocation,
+        description: firData.description,
+        suspects: firData.suspects,
+        victims: firData.victims,
+        witnesses: firData.witnesses,
+        evidenceHashes: evidenceHashesBytes32
+      });
+
+      // Call the contract function
+      const tx = await contract.fileFIR(
+        firData.complainantName,
+        firData.complainantContact,
+        firData.incidentType,
+        incidentDateTime,
+        firData.incidentLocation,
+        firData.description,
+        firData.suspects,
+        firData.victims,
+        firData.witnesses,
+        evidenceHashesBytes32
+      );
+
+      console.log('Transaction submitted:', tx.hash);
+
+      setTxStatus({
+        isLoading: true,
+        txHash: tx.hash,
+        error: null,
+        success: false,
+      });
+
+      // Wait for transaction confirmation
+      const receipt = await tx.wait();
+      console.log('Transaction confirmed:', receipt);
+
+      setTxStatus({
+        isLoading: false,
+        txHash: tx.hash,
+        error: null,
+        success: true,
+      });
+
+      return tx.hash;
+
+    } catch (error: any) {
+      console.error('FIR filing error:', error);
+      setTxStatus({
+        isLoading: false,
+        txHash: null,
+        error: error.message || 'Failed to file FIR on blockchain',
+        success: false,
+      });
+      throw error;
+    }
+  }, [isConnected, account, ipfsHashToBytes32]);
+
   // Call requestRegistration on the smart contract
   const requestRegistration = useCallback(async (documentHashes: string[]): Promise<string | null> => {
     if (!isConnected || !account || !window.ethereum) {
@@ -150,13 +249,6 @@ export function useBlockchain() {
     const result = await requestRegistration(userData.documentHashes || []);
     return result || '';
   }, [requestRegistration]);
-
-  const fileFIR = useCallback(async (firData: any): Promise<string> => {
-    // Convert FIR data to IPFS hash and register on blockchain
-    const firHash = ipfsHashToBytes32(JSON.stringify(firData));
-    const result = await requestRegistration([firHash]);
-    return result || '';
-  }, [requestRegistration, ipfsHashToBytes32]);
 
   const updateFIRStatus = useCallback(async (firId: string, status: string): Promise<string> => {
     // Update FIR status on blockchain

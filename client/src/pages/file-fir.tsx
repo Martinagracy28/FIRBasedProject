@@ -14,13 +14,21 @@ import { useBlockchain } from "@/hooks/use-blockchain";
 import { insertFirSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { INCIDENT_TYPES } from "@/lib/constants";
-import { FilePlus, User, AlertTriangle, Paperclip, Shield, Upload, Trash2 } from "lucide-react";
+import { FilePlus, User, AlertTriangle, Paperclip, Shield, Upload, Trash2, Plus, X } from "lucide-react";
 import TransactionModal from "@/components/transaction-modal";
 import FileUpload from "@/components/file-upload";
 import { z } from "zod";
 
-const firFormSchema = insertFirSchema.extend({
-  incidentDate: z.string(),
+const firFormSchema = z.object({
+  complainantName: z.string().min(1, "Name is required"),
+  complainantContact: z.string().min(1, "Contact is required"),
+  incidentType: z.string().min(1, "Incident type is required"),
+  incidentDate: z.string().min(1, "Date is required"),
+  incidentLocation: z.string().min(1, "Location is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  suspects: z.array(z.string()).default([]),
+  victims: z.array(z.string()).default([]),
+  witnesses: z.array(z.string()).default([]),
 });
 
 type FirFormData = z.infer<typeof firFormSchema>;
@@ -32,6 +40,9 @@ export default function FileFir() {
   const { fileFIR, transactionState } = useBlockchain();
   const [showTxModal, setShowTxModal] = useState(false);
   const [evidenceHashes, setEvidenceHashes] = useState<string[]>([]);
+  const [suspects, setSuspects] = useState<string[]>([]);
+  const [victims, setVictims] = useState<string[]>([]);
+  const [witnesses, setWitnesses] = useState<string[]>([]);
 
   const { data: user } = useQuery({
     queryKey: ['/api/users/me', account],
@@ -41,31 +52,51 @@ export default function FileFir() {
   const form = useForm<FirFormData>({
     resolver: zodResolver(firFormSchema),
     defaultValues: {
-      complainantId: user?.id || "",
+      complainantName: "",
+      complainantContact: "",
       incidentType: "",
       incidentDate: "",
       incidentLocation: "",
       description: "",
-      evidenceHashes: [],
+      suspects: [],
+      victims: [],
+      witnesses: [],
     },
   });
 
   const fileFirMutation = useMutation({
     mutationFn: async (data: FirFormData) => {
-      const firData = {
-        ...data,
-        complainantId: user?.id,
+      // Prepare blockchain data
+      const blockchainData = {
+        complainantName: data.complainantName,
+        complainantContact: data.complainantContact,
+        incidentType: data.incidentType,
         incidentDate: new Date(data.incidentDate),
+        incidentLocation: data.incidentLocation,
+        description: data.description,
+        suspects: suspects,
+        victims: victims,
+        witnesses: witnesses,
+        evidenceHashes: evidenceHashes,
+      };
+
+      // Prepare database data
+      const dbData = {
+        complainantId: user?.id,
+        incidentType: data.incidentType,
+        incidentDate: new Date(data.incidentDate),
+        incidentLocation: data.incidentLocation,
+        description: data.description,
         evidenceHashes: evidenceHashes,
       };
       
       // First create FIR in our system
-      const response = await apiRequest("POST", "/api/firs", firData);
+      const response = await apiRequest("POST", "/api/firs", dbData);
       const fir = await response.json();
       
       // Then submit to blockchain
       setShowTxModal(true);
-      const txHash = await fileFIR(firData);
+      const txHash = await fileFIR(blockchainData);
       
       return { fir, txHash };
     },
@@ -77,6 +108,9 @@ export default function FileFir() {
       });
       form.reset();
       setEvidenceHashes([]);
+      setSuspects([]);
+      setVictims([]);
+      setWitnesses([]);
     },
     onError: (error: any) => {
       toast({
@@ -148,21 +182,43 @@ export default function FileFir() {
                   <span>Complainant Information</span>
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                    <Input value={user.name} disabled className="bg-gray-50" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
-                    <Input value={user.phone} disabled className="bg-gray-50" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                    <Input value={user.email} disabled className="bg-gray-50" />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="complainantName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter your full name" 
+                            className="border-purple-200"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="complainantContact"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contact Number *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter your contact number" 
+                            className="border-purple-200"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Wallet Address</label>
-                    <Input value={user.walletAddress} disabled className="bg-gray-50 font-mono text-sm" />
+                    <Input value={account || ""} disabled className="bg-gray-50 font-mono text-sm" />
                   </div>
                 </div>
               </div>
@@ -253,6 +309,134 @@ export default function FileFir() {
                       </FormItem>
                     )}
                   />
+                </div>
+              </div>
+
+              {/* People Involved Section */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-100">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                  <User className="text-purple-600" size={20} />
+                  <span>People Involved</span>
+                </h4>
+                
+                {/* Suspects */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Suspects (if known)</label>
+                  <div className="space-y-2">
+                    {suspects.map((suspect, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <Input
+                          value={suspect}
+                          onChange={(e) => {
+                            const newSuspects = [...suspects];
+                            newSuspects[index] = e.target.value;
+                            setSuspects(newSuspects);
+                          }}
+                          placeholder="Enter suspect name/description"
+                          className="border-purple-200"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSuspects(suspects.filter((_, i) => i !== index))}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          <X size={16} />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSuspects([...suspects, ""])}
+                      className="text-purple-600 hover:bg-purple-50"
+                    >
+                      <Plus size={16} className="mr-1" />
+                      Add Suspect
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Victims */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Victims (if others affected)</label>
+                  <div className="space-y-2">
+                    {victims.map((victim, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <Input
+                          value={victim}
+                          onChange={(e) => {
+                            const newVictims = [...victims];
+                            newVictims[index] = e.target.value;
+                            setVictims(newVictims);
+                          }}
+                          placeholder="Enter victim name/description"
+                          className="border-purple-200"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setVictims(victims.filter((_, i) => i !== index))}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          <X size={16} />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setVictims([...victims, ""])}
+                      className="text-purple-600 hover:bg-purple-50"
+                    >
+                      <Plus size={16} className="mr-1" />
+                      Add Victim
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Witnesses */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Witnesses (if any)</label>
+                  <div className="space-y-2">
+                    {witnesses.map((witness, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <Input
+                          value={witness}
+                          onChange={(e) => {
+                            const newWitnesses = [...witnesses];
+                            newWitnesses[index] = e.target.value;
+                            setWitnesses(newWitnesses);
+                          }}
+                          placeholder="Enter witness name/contact"
+                          className="border-purple-200"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setWitnesses(witnesses.filter((_, i) => i !== index))}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          <X size={16} />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setWitnesses([...witnesses, ""])}
+                      className="text-purple-600 hover:bg-purple-50"
+                    >
+                      <Plus size={16} className="mr-1" />
+                      Add Witness
+                    </Button>
+                  </div>
                 </div>
               </div>
 
