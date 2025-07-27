@@ -19,6 +19,7 @@ Preferred communication style: Simple, everyday language.
 - **TypeScript Fixes**: Resolved all TypeScript type errors in blockchain hook functions
 - **Transaction Flow Fix**: Restructured user verification to keep users visible until MetaMask transaction completes
 - **UI State Management**: Fixed premature user removal from pending list - now waits for blockchain confirmation
+- **User Role Correction**: Fixed user roles in database - admin (0x14e39d2c321970A68D239307aDdBD5249B9fa80d) and officer (0x5388da14B5d292c2150Ec17C7769dD142F02517D) now have correct roles
 
 ### January 26, 2025
 - **IPFS File Upload Integration**: Added full IPFS support with drag-and-drop file upload component
