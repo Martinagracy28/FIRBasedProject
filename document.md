@@ -10,7 +10,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### January 28, 2025
+### July 2025
 - **Blockchain FIR Assignment Fix**: Fixed critical "FIR does not exist" error by implementing proper blockchain FIR ID extraction and storage
 - **FIR Creation Enhancement**: Added blockchain FIR ID extraction from transaction receipts and database storage (blockchainFirId field)
 - **Officer Assignment Integration**: Updated officer assignment to use stored blockchain FIR ID instead of parsed FIR numbers
@@ -20,8 +20,7 @@ Preferred communication style: Simple, everyday language.
 - **Database Schema Update**: Added blockchainFirId field to FIR schema for proper blockchain-database mapping
 - **API Enhancement**: Added PATCH /api/firs/:id endpoint for updating FIR data with blockchain information
 
-### January 27, 2025
-- **Replit Agent Migration**: Successfully migrated project from Replit Agent to standard Replit environment
+### July, 2025
 - **User Verification Fix**: Fixed critical user verification blockchain integration issue - officers can now properly approve users
 - **Blockchain Integration**: Added proper `verifyUserOnBlockchain` function that calls the smart contract's `verifyUser(address)` method
 - **Error Resolution**: Fixed "Officers cannot self-register as users" error by using correct wallet address parameter
@@ -34,7 +33,7 @@ Preferred communication style: Simple, everyday language.
 - **Registration Status Pages**: Improved user experience with detailed status tracking and clear call-to-action buttons for registration
 - **Navigation Fix**: Users with role 'none' now see Register and Approval Status pages in sidebar navigation
 
-### January 26, 2025
+### July, 2025
 - **IPFS File Upload Integration**: Added full IPFS support with drag-and-drop file upload component
 - **Simplified User Registration**: Removed name, email, and phone fields - now only requires wallet address and document uploads  
 - **Enhanced File Management**: Real file uploading to IPFS with progress indicators and hash generation
