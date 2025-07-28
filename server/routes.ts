@@ -153,16 +153,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let firs;
       if (complainantId) {
+        console.log('Fetching FIRs for complainant:', complainantId);
         firs = await storage.getFirsByComplainant(complainantId as string);
       } else if (officerId) {
+        console.log('Fetching FIRs for officer:', officerId);
         firs = await storage.getFirsByOfficer(officerId as string);
       } else {
+        console.log('Fetching all FIRs');
         firs = await storage.getAllFirs();
       }
       
+      console.log('Retrieved FIRs:', firs?.length || 0);
       res.json(firs);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch FIRs" });
+      console.error('Error fetching FIRs:', error);
+      res.status(500).json({ message: "Failed to fetch FIRs", error: error.message });
     }
   });
 

@@ -53,15 +53,30 @@ export default function FirTracking() {
     select: (officers: any[]) => officers?.find?.(o => o.userId === user?.id),
   });
 
-  const queryParams = new URLSearchParams();
+  // Build query parameters based on user role
+  let queryKey = ['/api/firs'];
+  let queryString = '';
+  
   if (user?.role === 'user') {
-    queryParams.append('complainantId', user.id);
+    queryString = `?complainantId=${user.id}`;
+    queryKey.push(queryString);
   } else if (user?.role === 'officer' && officer) {
-    queryParams.append('officerId', officer.id);
+    queryString = `?officerId=${officer.id}`;
+    queryKey.push(queryString);
+  } else if (user?.role === 'admin') {
+    // Admin gets all FIRs, no query parameters needed
+    queryKey.push('all');
   }
 
   const { data: firs, isLoading } = useQuery({
-    queryKey: ['/api/firs', queryParams.toString()],
+    queryKey: queryKey,
+    queryFn: async () => {
+      const response = await fetch(`/api/firs${queryString}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch FIRs');
+      }
+      return response.json();
+    },
     enabled: !!user,
   });
 

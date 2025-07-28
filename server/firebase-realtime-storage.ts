@@ -36,7 +36,7 @@ export class FirebaseRealtimeStorage implements IStorage {
     const snapshot = await get(userRef);
 
     if (snapshot.exists()) {
-      return { id, ...snapshot.val() } as User;
+      return { id, ...snapshot.val() as object } as User;
     }
     return undefined;
   }
@@ -54,7 +54,7 @@ export class FirebaseRealtimeStorage implements IStorage {
     // Find user by wallet address
     for (const [id, userData] of Object.entries(users)) {
       if ((userData as any).walletAddress?.toLowerCase() === walletAddress.toLowerCase()) {
-        foundUser = { id, ...userData } as User;
+        foundUser = { id, ...userData as object } as User;
         userId = id;
         break;
       }
@@ -71,7 +71,7 @@ export class FirebaseRealtimeStorage implements IStorage {
       const officers = officersSnapshot.val();
       for (const [id, officerData] of Object.entries(officers)) {
         if ((officerData as any).userId === userId) {
-          officer = { id, ...officerData } as Officer;
+          officer = { id, ...officerData as object } as Officer;
           break;
         }
       }
@@ -134,7 +134,7 @@ export class FirebaseRealtimeStorage implements IStorage {
 
     const snapshot = await get(userRef);
     if (snapshot.exists()) {
-      return { id, ...snapshot.val() } as User;
+      return { id, ...snapshot.val() as object } as User;
     }
     return undefined;
   }
@@ -236,7 +236,7 @@ export class FirebaseRealtimeStorage implements IStorage {
     const result: (Officer & { user: User })[] = [];
 
     for (const [id, officerData] of Object.entries(officers)) {
-      const officer = { id, ...officerData } as Officer;
+      const officer = { id, ...officerData as object } as Officer;
       const user = await this.getUser(officer.userId);
       if (user) {
         result.push({ ...officer, user });
@@ -303,7 +303,11 @@ export class FirebaseRealtimeStorage implements IStorage {
       }
     }
 
-    return result.sort((a, b) => (b.createdAt as Date).getTime() - (a.createdAt as Date).getTime());
+    return result.sort((a, b) => {
+      const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : (a.createdAt as number);
+      const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : (b.createdAt as number);
+      return bTime - aTime;
+    });
   }
 
   async getFirsByComplainant(complainantId: string): Promise<FirWithDetails[]> {
@@ -324,7 +328,11 @@ export class FirebaseRealtimeStorage implements IStorage {
       }
     }
 
-    return result.sort((a, b) => (b.createdAt as Date).getTime() - (a.createdAt as Date).getTime());
+    return result.sort((a, b) => {
+      const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : (a.createdAt as number);
+      const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : (b.createdAt as number);
+      return bTime - aTime;
+    });
   }
 
   async getFirsByOfficer(officerId: string): Promise<FirWithDetails[]> {
@@ -345,7 +353,11 @@ export class FirebaseRealtimeStorage implements IStorage {
       }
     }
 
-    return result.sort((a, b) => (b.createdAt as Date).getTime() - (a.createdAt as Date).getTime());
+    return result.sort((a, b) => {
+      const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : (a.createdAt as number);
+      const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : (b.createdAt as number);
+      return bTime - aTime;
+    });
   }
 
   async getFir(id: string): Promise<FirWithDetails | undefined> {
@@ -478,11 +490,15 @@ export class FirebaseRealtimeStorage implements IStorage {
 
     for (const [id, updateData] of Object.entries(updates)) {
       if ((updateData as any).firId === firId) {
-        firUpdates.push({ id, ...updateData } as FirUpdate);
+        firUpdates.push({ id, ...updateData as object } as FirUpdate);
       }
     }
 
-    return firUpdates.sort((a, b) => (b.createdAt as Date).getTime() - (a.createdAt as Date).getTime());
+    return firUpdates.sort((a, b) => {
+      const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : (a.createdAt as number);
+      const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : (b.createdAt as number);
+      return bTime - aTime;
+    });
   }
 
   // Dashboard stats
