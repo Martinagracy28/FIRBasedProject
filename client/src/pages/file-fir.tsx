@@ -29,6 +29,7 @@ const firFormSchema = z.object({
   suspects: z.array(z.string()).default([]),
   victims: z.array(z.string()).default([]),
   witnesses: z.array(z.string()).default([]),
+  evidenceHashes: z.array(z.string()).default([]),
 });
 
 type FirFormData = z.infer<typeof firFormSchema>;
@@ -44,7 +45,7 @@ export default function FileFir() {
   const [victims, setVictims] = useState<string[]>([]);
   const [witnesses, setWitnesses] = useState<string[]>([]);
 
-  const { data: user } = useQuery({
+  const { data: user } = useQuery<{ id: string; status: string; role: string }>({
     queryKey: ['/api/users/me', account],
     enabled: !!account,
   });
@@ -61,6 +62,7 @@ export default function FileFir() {
       suspects: [],
       victims: [],
       witnesses: [],
+      evidenceHashes: [],
     },
   });
 
@@ -82,7 +84,7 @@ export default function FileFir() {
 
       // Prepare database data
       const dbData = {
-        complainantId: user?.id,
+        complainantId: user!.id,
         incidentType: data.incidentType,
         incidentDate: new Date(data.incidentDate),
         incidentLocation: data.incidentLocation,
