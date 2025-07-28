@@ -80,11 +80,7 @@ PORT=5000
    npm install
    ```
 
-3. **Remove Replit-specific dependencies (for standalone deployment)**
-   ```bash
-   npm uninstall @replit/vite-plugin-cartographer @replit/vite-plugin-runtime-error-modal
-   ```
-   
+3. **   
    Then replace the content of `vite.config.ts` with `vite.config.standalone.ts`:
    ```bash
    cp vite.config.standalone.ts vite.config.ts

@@ -1,12 +1,9 @@
 #!/bin/bash
 
-# Deploy script for standalone deployment (removes Replit dependencies)
+# Deploy script for standalone deployment
 
 echo "🚀 Starting standalone deployment preparation..."
 
-# Remove Replit-specific dependencies
-echo "📦 Removing Replit dependencies..."
-npm uninstall @replit/vite-plugin-cartographer @replit/vite-plugin-runtime-error-modal
 
 # Copy standalone vite config
 echo "⚙️  Updating Vite configuration..."
@@ -20,8 +17,6 @@ npm run build
 echo "📋 Creating production package.json..."
 node -e "
 const pkg = require('./package.json');
-delete pkg.devDependencies['@replit/vite-plugin-cartographer'];
-delete pkg.devDependencies['@replit/vite-plugin-runtime-error-modal'];
 console.log(JSON.stringify(pkg, null, 2));
 " > package.prod.json
 
