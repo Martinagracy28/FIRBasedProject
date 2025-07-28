@@ -86,7 +86,7 @@ export default function FileFir() {
       const dbData = {
         complainantId: user!.id,
         incidentType: data.incidentType,
-        incidentDate: new Date(data.incidentDate),
+        incidentDate: data.incidentDate, // Schema will handle string to Date conversion
         incidentLocation: data.incidentLocation,
         description: data.description,
         evidenceHashes: evidenceHashes,

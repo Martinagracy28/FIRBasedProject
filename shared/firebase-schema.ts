@@ -72,7 +72,7 @@ export const insertOfficerSchema = z.object({
 export const insertFirSchema = z.object({
   complainantId: z.string().min(1),
   incidentType: z.string().min(1),
-  incidentDate: z.date(),
+  incidentDate: z.string().transform((str) => new Date(str)),
   incidentLocation: z.string().min(1),
   description: z.string().min(1),
   evidenceHashes: z.array(z.string()).optional().default([]),
