@@ -10,6 +10,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### January 28, 2025
+- **Blockchain FIR Assignment Fix**: Fixed critical "FIR does not exist" error by implementing proper blockchain FIR ID extraction and storage
+- **FIR Creation Enhancement**: Added blockchain FIR ID extraction from transaction receipts and database storage (blockchainFirId field)
+- **Officer Assignment Integration**: Updated officer assignment to use stored blockchain FIR ID instead of parsed FIR numbers
+- **Null Safety Fixes**: Fixed undefined error when displaying assigned officer names - added proper fallback handling
+- **Data Structure Optimization**: Enhanced FIR data structure to support blockchain integration with transaction hash storage
+- **UI Error Resolution**: Fixed runtime error "Cannot read properties of undefined (reading 'split')" in FIR tracking page
+- **Database Schema Update**: Added blockchainFirId field to FIR schema for proper blockchain-database mapping
+- **API Enhancement**: Added PATCH /api/firs/:id endpoint for updating FIR data with blockchain information
+
 ### January 27, 2025
 - **Replit Agent Migration**: Successfully migrated project from Replit Agent to standard Replit environment
 - **User Verification Fix**: Fixed critical user verification blockchain integration issue - officers can now properly approve users

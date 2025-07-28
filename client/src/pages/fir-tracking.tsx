@@ -331,7 +331,7 @@ export default function FirTracking() {
                       </td>
                       <td className="py-4 px-6">
                         <div>
-                          <p className="font-medium text-gray-900">{fir.complainant.name}</p>
+                          <p className="font-medium text-gray-900">{fir.complainant?.name || fir.complainant?.walletAddress}</p>
                           <p className="text-sm text-gray-600">
                             Filed: {new Date(fir.createdAt).toLocaleDateString()}
                           </p>
@@ -355,11 +355,14 @@ export default function FirTracking() {
                           <div className="flex items-center space-x-2">
                             <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center">
                               <span className="text-white text-xs font-medium">
-                                {fir.assignedOfficer.user.name.split(' ').map((n: string) => n[0]).join('')}
+                                {fir.assignedOfficer.user?.name 
+                                  ? fir.assignedOfficer.user.name.split(' ').map((n: string) => n[0]).join('')
+                                  : fir.assignedOfficer.name?.split(' ').map((n: string) => n[0]).join('') || 'O'
+                                }
                               </span>
                             </div>
                             <span className="text-sm font-medium text-gray-900">
-                              {fir.assignedOfficer.user.name}
+                              {fir.assignedOfficer.user?.name || fir.assignedOfficer.name || 'Officer'}
                             </span>
                           </div>
                         ) : (
@@ -558,7 +561,7 @@ export default function FirTracking() {
                   <div>
                     <label className="text-sm font-medium text-gray-700">Assigned Officer</label>
                     <p className="text-gray-900">
-                      {selectedFir.assignedOfficer?.user?.name || 'Not assigned'}
+                      {selectedFir.assignedOfficer?.user?.name || selectedFir.assignedOfficer?.name || 'Not assigned'}
                     </p>
                   </div>
                   <div>
