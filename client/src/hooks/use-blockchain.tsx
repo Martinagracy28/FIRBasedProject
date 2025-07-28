@@ -408,6 +408,71 @@ export function useBlockchain() {
     }
   }, [isConnected, account]);
 
+  // Assign officer to FIR on blockchain using assignOfficerToFIR function
+  const assignOfficerToFIR = useCallback(async (firId: number, officerAddr: string): Promise<string | null> => {
+    if (!isConnected || !account || !window.ethereum) {
+      throw new Error('Wallet not connected');
+    }
+
+    setTxStatus({
+      isLoading: true,
+      txHash: null,
+      error: null,
+      success: false,
+    });
+
+    try {
+      const { ethers } = await import('ethers');
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+      console.log('Assigning officer to FIR:', { firId, officerAddr });
+      
+      const tx = await contract.assignOfficerToFIR(firId, officerAddr);
+      
+      setTxStatus(prev => ({
+        ...prev,
+        txHash: tx.hash,
+      }));
+
+      const receipt = await tx.wait();
+      console.log('Officer assignment transaction confirmed:', receipt);
+
+      setTxStatus({
+        isLoading: false,
+        txHash: tx.hash,
+        error: null,
+        success: true,
+      });
+
+      return tx.hash;
+    } catch (error: any) {
+      console.error('Error assigning officer to FIR:', error);
+      let errorMessage = 'Failed to assign officer to FIR';
+      
+      if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+        errorMessage = 'Transaction rejected by user';
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient funds for gas';
+      } else if (error.message?.includes('user rejected')) {
+        errorMessage = 'Transaction rejected by user';
+      } else if (error.reason) {
+        errorMessage = error.reason;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setTxStatus({
+        isLoading: false,
+        txHash: null,
+        error: errorMessage,
+        success: false,
+      });
+      return null;
+    }
+  }, [isConnected, account]);
+
   return {
     requestRegistration,
     registerUser,
@@ -415,6 +480,7 @@ export function useBlockchain() {
     fileFIR,
     updateFIRStatus,
     assignOfficer,
+    assignOfficerToFIR,
     addOfficerToBlockchain,
     transactionState: txStatus,
     resetTxStatus,

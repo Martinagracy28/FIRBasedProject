@@ -31,12 +31,13 @@ export default function FirTracking() {
   const { account } = useWallet();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { updateFIRStatus, assignOfficer, transactionState } = useBlockchain();
+  const { updateFIRStatus, assignOfficer, assignOfficerToFIR, transactionState } = useBlockchain();
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFir, setSelectedFir] = useState<any>(null);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [showFirDetails, setShowFirDetails] = useState(false);
   const [showTxModal, setShowTxModal] = useState(false);
   const [updateStatus, setUpdateStatus] = useState("");
   const [updateComments, setUpdateComments] = useState("");
@@ -128,24 +129,37 @@ export default function FirTracking() {
     mutationFn: async () => {
       if (!selectedFir || !selectedOfficer) return;
       
+      // Find the selected officer's wallet address
+      const officer = officers?.find((o: any) => o.id === selectedOfficer);
+      if (!officer) throw new Error('Officer not found');
+
+      setShowTxModal(true);
+      
+      // Call blockchain function first with numeric FIR ID
+      const firId = parseInt(selectedFir.firNumber.replace('FIR', ''));
+      const blockchainTxHash = await assignOfficerToFIR(firId, officer.walletAddress);
+
+      if (!blockchainTxHash) {
+        throw new Error('Blockchain transaction failed');
+      }
+      
+      // Call backend API to assign officer
       const response = await apiRequest("PATCH", `/api/firs/${selectedFir.id}/assign`, {
         officerId: selectedOfficer,
+        blockchainTxHash: blockchainTxHash
       });
       const updatedFir = await response.json();
       
-      setShowTxModal(true);
-      const officerData = officers?.find((o: any) => o.id === selectedOfficer);
-      const txHash = await assignOfficer(selectedFir.id, officerData?.user?.walletAddress || "");
-      
-      return { updatedFir, txHash };
+      return { updatedFir, txHash: blockchainTxHash };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/firs'] });
       toast({
         title: "Officer Assigned",
-        description: `Officer assigned to FIR ${selectedFir?.firNumber}`,
+        description: `Officer assigned to FIR ${selectedFir?.firNumber} on blockchain`,
       });
       setShowAssignDialog(false);
+      setShowFirDetails(false);
       setSelectedFir(null);
       setSelectedOfficer("");
     },
@@ -198,10 +212,7 @@ export default function FirTracking() {
 
   const viewFir = (fir: any) => {
     setSelectedFir(fir);
-    toast({
-      title: "FIR Details",
-      description: `Viewing details for ${fir.firNumber}`,
-    });
+    setShowFirDetails(true);
   };
 
   const openUpdateDialog = (fir: any) => {
@@ -493,6 +504,141 @@ export default function FirTracking() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* FIR Details Dialog */}
+      <Dialog open={showFirDetails} onOpenChange={setShowFirDetails}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <FileText className="text-purple-600" size={24} />
+              <span>FIR Details - {selectedFir?.firNumber}</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedFir && (
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">FIR Number</label>
+                    <p className="text-lg font-semibold text-purple-600">{selectedFir.firNumber}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Status</label>
+                    <Badge className={`${STATUS_COLORS[selectedFir.status]} text-white`}>
+                      {selectedFir.status.replace('_', ' ').toUpperCase()}
+                    </Badge>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Incident Type</label>
+                    <p className="text-gray-900">{selectedFir.incidentType}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Date Filed</label>
+                    <p className="text-gray-900">{new Date(selectedFir.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Complainant</label>
+                    <p className="text-gray-900">{selectedFir.complainant?.walletAddress}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Location</label>
+                    <p className="text-gray-900">{selectedFir.incidentLocation}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Assigned Officer</label>
+                    <p className="text-gray-900">
+                      {selectedFir.assignedOfficer?.user?.name || 'Not assigned'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Evidence Files</label>
+                    <p className="text-gray-900">{selectedFir.evidenceHashes?.length || 0} files</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Description</label>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-900 whitespace-pre-wrap">{selectedFir.description}</p>
+                </div>
+              </div>
+
+              {/* Evidence Hashes */}
+              {selectedFir.evidenceHashes && selectedFir.evidenceHashes.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Evidence Files (IPFS)</label>
+                  <div className="space-y-2">
+                    {selectedFir.evidenceHashes.map((hash: string, index: number) => (
+                      <div key={index} className="bg-gray-50 p-3 rounded-lg flex items-center justify-between">
+                        <span className="text-sm font-mono text-gray-600">{hash}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(`https://ipfs.io/ipfs/${hash}`, '_blank')}
+                        >
+                          View
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Updates/History */}
+              {selectedFir.updates && selectedFir.updates.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Status Updates</label>
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {selectedFir.updates.map((update: any, index: number) => (
+                      <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <p className="text-sm text-gray-900">{update.comments}</p>
+                          <span className="text-xs text-gray-500">
+                            {new Date(update.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Admin Actions */}
+              {user?.role === 'admin' && (
+                <div className="border-t pt-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium text-gray-900">Admin Actions</h3>
+                    <div className="flex space-x-3">
+                      {!selectedFir.assignedOfficer && (
+                        <Button
+                          onClick={() => setShowAssignDialog(true)}
+                          className="bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600"
+                        >
+                          <Users className="mr-2" size={16} />
+                          Assign Officer
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowFirDetails(false)}
+                      >
+                        Close
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
