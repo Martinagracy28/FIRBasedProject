@@ -440,14 +440,29 @@ export class FirebaseRealtimeStorage implements IStorage {
     return undefined;
   }
 
-  async assignFirToOfficer(firId: string, officerId: string): Promise<Fir | undefined> {
+  async updateFir(firId: string, updateData: any): Promise<FirWithDetails | undefined> {
+    const firRef = ref(db, `firs/${firId}`);
+    await update(firRef, {
+      ...updateData,
+      updatedAt: serverTimestamp(),
+    });
+    return this.getFir(firId);
+  }
+
+  async assignFirToOfficer(firId: string, officerId: string, blockchainTxHash?: string): Promise<Fir | undefined> {
     const firRef = ref(db, `firs/${firId}`);
 
-    await update(firRef, {
+    const updateData: any = {
       assignedOfficerId: officerId,
       status: 'in_progress',
       updatedAt: serverTimestamp()
-    });
+    };
+
+    if (blockchainTxHash) {
+      updateData.assignmentTxHash = blockchainTxHash;
+    }
+
+    await update(firRef, updateData);
 
     const snapshot = await get(firRef);
     if (snapshot.exists()) {

@@ -135,9 +135,13 @@ export default function FirTracking() {
 
       setShowTxModal(true);
       
-      // Call blockchain function first with numeric FIR ID
-      const firId = parseInt(selectedFir.firNumber.replace('FIR', ''));
-      const blockchainTxHash = await assignOfficerToFIR(firId, officer.walletAddress);
+      // Check if the FIR has a blockchain FIR ID
+      if (!selectedFir.blockchainFirId) {
+        throw new Error('This FIR has not been recorded on the blockchain yet. Cannot assign officer.');
+      }
+      
+      // Call blockchain function first with stored blockchain FIR ID
+      const blockchainTxHash = await assignOfficerToFIR(selectedFir.blockchainFirId, officer.walletAddress);
 
       if (!blockchainTxHash) {
         throw new Error('Blockchain transaction failed');

@@ -130,6 +130,22 @@ export function useBlockchain() {
       const receipt = await tx.wait();
       console.log('Transaction confirmed:', receipt);
 
+      // Extract FIR ID from event logs
+      let blockchainFirId = null;
+      if (receipt.logs && receipt.logs.length > 0) {
+        try {
+          // Parse the first event log to get the FIR ID
+          const log = receipt.logs[0];
+          if (log.topics && log.topics.length > 1) {
+            // The FIR ID is typically in the first indexed parameter (topic[1])
+            blockchainFirId = parseInt(log.topics[1], 16);
+            console.log('Extracted blockchain FIR ID:', blockchainFirId);
+          }
+        } catch (error) {
+          console.warn('Could not extract FIR ID from transaction logs:', error);
+        }
+      }
+
       setTxStatus({
         isLoading: false,
         txHash: tx.hash,
@@ -137,7 +153,7 @@ export function useBlockchain() {
         success: true,
       });
 
-      return tx.hash;
+      return { txHash: tx.hash, blockchainFirId };
 
     } catch (error: any) {
       console.error('FIR filing error:', error);

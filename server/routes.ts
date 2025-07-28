@@ -186,12 +186,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/firs/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      
+      const fir = await storage.updateFir(id, updateData);
+      
+      if (!fir) {
+        return res.status(404).json({ message: "FIR not found" });
+      }
+      
+      res.json(fir);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update FIR" });
+    }
+  });
+
   app.patch("/api/firs/:id/assign", async (req, res) => {
     try {
       const { id } = req.params;
-      const { officerId } = req.body;
+      const { officerId, blockchainTxHash } = req.body;
       
-      const fir = await storage.assignFirToOfficer(id, officerId);
+      const fir = await storage.assignFirToOfficer(id, officerId, blockchainTxHash);
       
       if (!fir) {
         return res.status(404).json({ message: "FIR not found" });

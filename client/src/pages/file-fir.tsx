@@ -98,9 +98,17 @@ export default function FileFir() {
       
       // Then submit to blockchain
       setShowTxModal(true);
-      const txHash = await fileFIR(blockchainData);
+      const blockchainResult = await fileFIR(blockchainData);
       
-      return { fir, txHash };
+      // Update the FIR with blockchain data if we got a FIR ID
+      if (blockchainResult && typeof blockchainResult === 'object' && blockchainResult.blockchainFirId) {
+        await apiRequest("PATCH", `/api/firs/${fir.id}`, {
+          blockchainTxHash: blockchainResult.txHash,
+          blockchainFirId: blockchainResult.blockchainFirId
+        });
+      }
+      
+      return { fir, txHash: blockchainResult?.txHash || blockchainResult };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/firs'] });
