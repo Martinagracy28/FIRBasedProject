@@ -1,5 +1,6 @@
 # SecureFIR - Blockchain-Based Police FIR Management System
 
+
 ## Overview
 
 SecureFIR is a modern web application that digitizes and secures the First Information Report (FIR) process for police departments using blockchain technology. The system provides role-based access for citizens, police officers, and administrators to file, manage, and track FIRs with complete transparency and immutability.
